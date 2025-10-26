@@ -1,11 +1,11 @@
-import { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { Document, KPIData } from '@/types/document'
 import { supabase } from '@/lib/supabase'
 
 interface UseRealTimeOptions {
   documents: Document[]
   kpiData: KPIData
-  onDocumentsUpdate: (documents: Document[]) => void
+  onDocumentsUpdate: React.Dispatch<React.SetStateAction<Document[]>>
   onKPIUpdate: (kpi: KPIData) => void
 }
 

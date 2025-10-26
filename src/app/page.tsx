@@ -1,7 +1,7 @@
 import { DocumentsInterface } from '@/components/documents-interface'
 import { ErrorBoundary } from '@/components/error-boundary'
 import { supabase } from '@/lib/supabase'
-import { Document, DatabaseRow } from '@/types/document'
+import { Document, DatabaseRow, AuditEvent } from '@/types/document'
 
 function mapRowToDocument(row: DatabaseRow): Document {
   const toUnion = <T extends string>(val: unknown, allowed: T[], fallback: T): T => {
@@ -49,8 +49,6 @@ function mapRowToDocument(row: DatabaseRow): Document {
   // Extract document number from payload with multiple possible keys
   const documentNumber = String(
     row.document_number || 
-    row.documentNumber || 
-    row.number ||
     extractFromPayload([
       'invoice_number', 'facture_number', 'numero_facture',
       'bl_number', 'bill_of_lading_number',
@@ -81,7 +79,6 @@ function mapRowToDocument(row: DatabaseRow): Document {
   // Extract supplier/vendor information from payload
   const supplier = String(
     row.supplier || 
-    row.vendor ||
     extractFromPayload([
       'supplier_name', 'vendor_name', 'company_name', 'fournisseur',
       'seller_name', 'from_company', 'issuer_name', 'shipper_name',
@@ -112,7 +109,7 @@ function mapRowToDocument(row: DatabaseRow): Document {
     receivedAt.setTime(Date.now())
   }
   
-  const defaultTimeline = [
+  const defaultTimeline: AuditEvent[] = [
     { 
       timestamp: new Date(receivedAt.getTime()), 
       event: 'arrived' as const,
@@ -165,9 +162,9 @@ function mapRowToDocument(row: DatabaseRow): Document {
     confidence: Number(row.confidence ?? 0.9),
     payload: payload,
     thumbnails: row.thumbnails ?? [],
-    auditTimeline: row.document_events && row.document_events.length > 0 ? row.document_events : defaultTimeline,
-    downloadUrl: row.file_url ?? row.downloadUrl ?? undefined,
-    downloadExpiry: row.file_url_expiry ? new Date(row.file_url_expiry) : undefined,
+    auditTimeline: row.document_events && row.document_events.length > 0 ? row.document_events as AuditEvent[] : defaultTimeline,
+    downloadUrl: row.download_url ?? row.downloadUrl ?? undefined,
+    downloadExpiry: row.download_expiry ? new Date(row.download_expiry) : row.downloadExpiry ? new Date(row.downloadExpiry) : undefined,
   }
   return doc
 }

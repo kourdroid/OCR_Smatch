@@ -18,17 +18,17 @@ interface Command {
   action: () => void
 }
 
-type CommandResult = { type: 'command' } & Command
-type DocumentResult = { type: 'document' } & Document
+type CommandResult = { resultType: 'command' } & Command
+type DocumentResult = { resultType: 'document' } & Document
 type SearchResult = CommandResult | DocumentResult
 
 // Type guard functions
 const isDocumentResult = (result: SearchResult): result is DocumentResult => {
-  return result.type === 'document'
+  return result.resultType === 'document'
 }
 
 const isCommandResult = (result: SearchResult): result is CommandResult => {
-  return result.type === 'command'
+  return result.resultType === 'command'
 }
 
 interface CommandBarProps {
@@ -68,8 +68,8 @@ export function CommandBar({ isOpen, onClose, documents, onDocumentSelect }: Com
   ]
 
   const allResults: SearchResult[] = [
-    ...commands.map(cmd => ({ type: 'command' as const, ...cmd })),
-    ...filteredDocuments.map(doc => ({ type: 'document' as const, ...doc }))
+    ...commands.map(cmd => ({ resultType: 'command' as const, ...cmd })),
+    ...filteredDocuments.map(doc => ({ resultType: 'document' as const, ...doc }))
   ]
 
   // Reset selected index when query changes
@@ -108,7 +108,7 @@ export function CommandBar({ isOpen, onClose, documents, onDocumentSelect }: Com
           e.preventDefault()
           const selected = allResults[selectedIndex]
           if (selected) {
-            if (selected.type === 'command') {
+            if (selected.resultType === 'command') {
               selected.action()
             } else {
               onDocumentSelect(selected)
@@ -174,13 +174,13 @@ export function CommandBar({ isOpen, onClose, documents, onDocumentSelect }: Com
           ) : (
             <div className="p-1">
               {/* Commands Section */}
-              {commands.some(cmd => allResults.some(r => r.type === 'command' && r.id === cmd.id)) && (
+              {commands.some(cmd => allResults.some(r => r.resultType === 'command' && r.id === cmd.id)) && (
                 <>
                   <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
                     Commands
                   </div>
                   {allResults
-                    .filter(result => result.type === 'command')
+                    .filter(result => result.resultType === 'command')
                     .map((result, index) => {
                       const globalIndex = allResults.findIndex(r => r === result)
                       return (

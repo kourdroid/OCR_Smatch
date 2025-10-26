@@ -9,7 +9,7 @@ import { EmptyState } from './empty-state'
 import { CommandBar } from './command-bar'
 import { RealTimeIndicator } from './real-time-indicator'
 import { ConfidenceReview } from './confidence-review'
-import { Document, FilterState, KPIData, DocumentRow, DocumentGroup, DatabaseRow } from '@/types/document'
+import { Document, FilterState, KPIData, DocumentRow, DocumentGroup, DatabaseRow, AuditEvent } from '@/types/document'
 import { supabase } from '@/lib/supabase'
 import { documentSchemaService } from '@/lib/document-schema'
 import { useRealTime } from '@/hooks/use-real-time'
@@ -48,7 +48,7 @@ export function DocumentsInterface({ initialDocuments }: { initialDocuments: Doc
     amountRange: {}
   })
 
-  const [documentTypes, setDocumentTypes] = useState<Array<{name: string, displayName: string, icon: LucideIcon}>>([])
+  const [documentTypes, setDocumentTypes] = useState<Array<{name: string, displayName: string, icon: string}>>([]);
 
   // Real-time functionality
   const {
@@ -174,8 +174,8 @@ export function DocumentsInterface({ initialDocuments }: { initialDocuments: Doc
           confidence: Number(row.confidence ?? 0.9),
           payload: row.payload ?? {},
           thumbnails: row.thumbnails ?? [],
-          auditTimeline: row.document_events ?? [],
-          downloadUrl: row.file_url ?? undefined,
+          auditTimeline: (row.document_events ?? []) as AuditEvent[],
+          downloadUrl: row.download_url ?? undefined,
         })))
         return
       }
@@ -202,8 +202,8 @@ export function DocumentsInterface({ initialDocuments }: { initialDocuments: Doc
           confidence: Number(row.confidence ?? 0.9),
           payload: row.payload ?? {},
           thumbnails: row.thumbnails ?? [],
-          auditTimeline: row.document_events ?? [],
-          downloadUrl: row.file_url ?? undefined,
+          auditTimeline: (row.document_events ?? []) as AuditEvent[],
+          downloadUrl: row.download_url ?? undefined,
         })))
       }
     }
