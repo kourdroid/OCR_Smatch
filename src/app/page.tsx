@@ -21,10 +21,10 @@ function mapRowToDocument(row: DatabaseRow): Document {
     return fallback
   }
 
-  // Extract document type from payload or filename
+  // Extract document type from payload or file type
   const inferDocumentType = (): Document['type'] => {
     const payloadKeys = Object.keys(payload).join(' ').toLowerCase()
-    const filename = String(row.filename || row.file_name || '').toLowerCase()
+    const filename = String(row.file_type || row.fileType || '').toLowerCase()
     
     if (payloadKeys.includes('invoice') || payloadKeys.includes('facture') || filename.includes('invoice') || filename.includes('facture')) {
       return 'invoice'
