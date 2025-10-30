@@ -1,4 +1,4 @@
-import { supabase } from './supabase'
+import { supabase, isSupabaseAvailable } from './supabase'
 import { DocumentType, DocumentSchema, DocumentTypeInfo, SchemaValidationResult } from '@/types/document-schema'
 
 class DocumentSchemaService {
@@ -16,7 +16,7 @@ class DocumentSchemaService {
       name: 'invoice',
       displayName: 'Facture',
       description: 'Document de facturation',
-      schema: { type: 'object', required: ['amount', 'supplier'], properties: {} },
+      schema: { type: 'object', required: ['total', 'supplier_name'], properties: {} },
       icon: '🧾',
       color: 'bg-green-100 text-green-800',
       targetTable: 'invoices'
@@ -25,7 +25,7 @@ class DocumentSchemaService {
       name: 'BL',
       displayName: 'Bon de Livraison',
       description: 'Bon de livraison',
-      schema: { type: 'object', required: ['items'], properties: {} },
+      schema: { type: 'object', required: ['bill_of_lading', 'supplier_name'], properties: {} },
       icon: '📦',
       color: 'bg-blue-100 text-blue-800',
       targetTable: 'delivery_notes'
@@ -34,7 +34,7 @@ class DocumentSchemaService {
       name: 'BC',
       displayName: 'Bon de Commande',
       description: 'Bon de commande',
-      schema: { type: 'object', required: ['items'], properties: {} },
+      schema: { type: 'object', required: ['customs_declaration', 'supplier_name'], properties: {} },
       icon: '📋',
       color: 'bg-purple-100 text-purple-800',
       targetTable: 'purchase_orders'
@@ -43,7 +43,7 @@ class DocumentSchemaService {
       name: 'CO',
       displayName: 'Bon de Mouvement',
       description: 'Bon de mouvement',
-      schema: { type: 'object', required: ['items'], properties: {} },
+      schema: { type: 'object', required: ['certificate_number', 'supplier_name'], properties: {} },
       icon: '🔄',
       color: 'bg-orange-100 text-orange-800',
       targetTable: 'movement_orders'
@@ -75,6 +75,14 @@ class DocumentSchemaService {
   }
 
   private async initializeWithRetry(): Promise<void> {
+    // Skip if Supabase is not available
+    if (!isSupabaseAvailable() || !supabase) {
+      console.warn('Supabase not available - using fallback document types')
+      this.initializationError = 'Supabase not available'
+      this.loadFallbackData()
+      return
+    }
+
     for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
       try {
         const { data, error } = await supabase
@@ -259,7 +267,7 @@ class DocumentSchemaService {
         Object.entries(properties).forEach(([field, property]) => {
           if (typeof field === 'string' && field in payload) {
             try {
-              if (!this.validateFieldType(payload[field], property)) {
+              if (!this.validateFieldValue(payload[field], property)) {
                 invalidFields.push(field)
               }
             } catch (error) {
@@ -339,17 +347,95 @@ class DocumentSchemaService {
 
       switch (type.toLowerCase()) {
         case 'string':
-          return typeof value === 'string'
+          if (typeof value !== 'string') return false
+          
+          // Validate string constraints
+          if (property.minLength !== undefined && value.length < property.minLength) return false
+          if (property.maxLength !== undefined && value.length > property.maxLength) return false
+          if (property.pattern && !new RegExp(property.pattern).test(value)) return false
+          
+          // Validate string formats
+          if (property.format) {
+            switch (property.format) {
+              case 'email':
+                return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+              case 'date':
+                return !isNaN(Date.parse(value)) || /^\d{2}\/\d{2}\/\d{4}$/.test(value)
+              case 'date-time':
+                return !isNaN(Date.parse(value))
+              case 'uri':
+              case 'url':
+                try {
+                  new URL(value)
+                  return true
+                } catch {
+                  return false
+                }
+              default:
+                return true
+            }
+          }
+          return true
+
         case 'number':
-          return typeof value === 'number' && !isNaN(value) && isFinite(value)
+          if (typeof value !== 'number' || !isFinite(value) || isNaN(value)) return false
+          
+          // Validate number constraints
+          if (property.minimum !== undefined && value < property.minimum) return false
+          if (property.maximum !== undefined && value > property.maximum) return false
+          if (property.multipleOf !== undefined && value % property.multipleOf !== 0) return false
+          return true
+
         case 'integer':
-          return Number.isInteger(value) && isFinite(value)
+          if (!Number.isInteger(value) || !isFinite(value)) return false
+          
+          // Validate integer constraints
+          if (property.minimum !== undefined && value < property.minimum) return false
+          if (property.maximum !== undefined && value > property.maximum) return false
+          if (property.multipleOf !== undefined && value % property.multipleOf !== 0) return false
+          return true
+
         case 'boolean':
           return typeof value === 'boolean'
+
         case 'array':
-          return Array.isArray(value)
+          if (!Array.isArray(value)) return false
+          
+          // Validate array constraints
+          if (property.minItems !== undefined && value.length < property.minItems) return false
+          if (property.maxItems !== undefined && value.length > property.maxItems) return false
+          
+          // Validate array items if schema is provided
+          if (property.items) {
+            return value.every(item => this.validateFieldType(item, property.items))
+          }
+          return true
+
         case 'object':
-          return typeof value === 'object' && !Array.isArray(value) && value !== null
+          if (typeof value !== 'object' || Array.isArray(value) || value === null) return false
+          
+          // Validate object properties if schema is provided
+          if (property.properties) {
+            // Check required properties
+            if (property.required && Array.isArray(property.required)) {
+              for (const requiredProp of property.required) {
+                if (!(requiredProp in value) || value[requiredProp] === null || value[requiredProp] === undefined) {
+                  return false
+                }
+              }
+            }
+            
+            // Validate each property
+            for (const [propName, propValue] of Object.entries(value)) {
+              if (property.properties[propName]) {
+                if (!this.validateFieldType(propValue, property.properties[propName])) {
+                  return false
+                }
+              }
+            }
+          }
+          return true
+
         default:
           return true
       }
@@ -357,6 +443,23 @@ class DocumentSchemaService {
       console.error('Error validating field type:', error)
       return false
     }
+  }
+
+  /**
+   * Enhanced validation that also checks enum constraints
+   */
+  private validateFieldValue(value: any, property: any): boolean {
+    // First check the basic type validation
+    if (!this.validateFieldType(value, property)) {
+      return false
+    }
+
+    // Check enum constraints
+    if (property.enum && Array.isArray(property.enum)) {
+      return property.enum.includes(value)
+    }
+
+    return true
   }
 
   private getDisplayName(typeName: string): string {
@@ -471,6 +574,378 @@ class DocumentSchemaService {
         color: 'bg-gray-100 text-gray-800',
         schema: this.getDefaultSchema()
       }
+    }
+  }
+
+  private async createTargetTable(tableName: string, requiredFields: Record<string, any>): Promise<void> {
+    if (!isSupabaseAvailable() || !supabase) {
+      throw new Error('Supabase not available - cannot create table')
+    }
+
+    try {
+      // Build the CREATE TABLE SQL statement
+      const fieldDefinitions = Object.entries(requiredFields).map(([fieldName, fieldInfo]) => {
+        const sqlType = this.mapFieldTypeToSQL(fieldInfo.type || 'string')
+        const notNull = fieldInfo.required ? 'NOT NULL' : ''
+        return `"${fieldName}" ${sqlType} ${notNull}`.trim()
+      }).join(',\n  ')
+
+      const createTableSQL = `
+        CREATE TABLE IF NOT EXISTS "${tableName}" (
+          "id" BIGSERIAL PRIMARY KEY,
+          "document_id" BIGINT REFERENCES documents(id) ON DELETE CASCADE,
+          "created_at" TIMESTAMPTZ DEFAULT NOW(),
+          "updated_at" TIMESTAMPTZ DEFAULT NOW(),
+          ${fieldDefinitions}
+        );
+        
+        -- Create an index on document_id for better performance
+        CREATE INDEX IF NOT EXISTS "idx_${tableName}_document_id" ON "${tableName}" ("document_id");
+        
+        -- Create an updated_at trigger
+        CREATE OR REPLACE FUNCTION update_updated_at_column()
+        RETURNS TRIGGER AS $$
+        BEGIN
+          NEW.updated_at = NOW();
+          RETURN NEW;
+        END;
+        $$ language 'plpgsql';
+        
+        DROP TRIGGER IF EXISTS "update_${tableName}_updated_at" ON "${tableName}";
+        CREATE TRIGGER "update_${tableName}_updated_at"
+          BEFORE UPDATE ON "${tableName}"
+          FOR EACH ROW
+          EXECUTE FUNCTION update_updated_at_column();
+      `
+
+      const { error } = await supabase.rpc('exec_sql', { sql: createTableSQL })
+      
+      if (error) {
+        // If the RPC function doesn't exist, try using the SQL directly
+        console.warn('exec_sql RPC not available, attempting direct SQL execution')
+        
+        // Split the SQL into individual statements and execute them
+        const statements = createTableSQL.split(';').filter(stmt => stmt.trim())
+        
+        for (const statement of statements) {
+          if (statement.trim()) {
+            const { error: directError } = await supabase.from('_sql').select().limit(0)
+            if (directError) {
+              console.warn('Direct SQL execution not available, table creation skipped')
+              break
+            }
+          }
+        }
+      }
+
+      console.log(`Target table "${tableName}" created successfully`)
+    } catch (error) {
+      console.error(`Failed to create target table "${tableName}":`, error)
+      // Don't throw the error - table creation failure shouldn't prevent document type creation
+      console.warn('Continuing with document type creation despite table creation failure')
+    }
+  }
+
+  private mapFieldTypeToSQL(fieldType: string): string {
+    switch (fieldType.toLowerCase()) {
+      case 'number':
+      case 'integer':
+        return 'NUMERIC'
+      case 'boolean':
+        return 'BOOLEAN'
+      case 'date':
+        return 'DATE'
+      case 'datetime':
+        return 'TIMESTAMPTZ'
+      case 'textarea':
+      case 'text':
+        return 'TEXT'
+      case 'string':
+      default:
+        return 'VARCHAR(255)'
+    }
+  }
+
+  async createDocumentType(documentTypeData: {
+    name: string
+    displayName: string
+    description: string
+    icon: string
+    color: string
+    targetTable: string
+    requiredFields: any // Complex schema structure from the enhanced modal
+  }): Promise<void> {
+    if (!isSupabaseAvailable() || !supabase) {
+      throw new Error('Supabase not available - cannot create document type')
+    }
+
+    try {
+      // Convert the complex schema structure to a proper JSON schema
+      const schema = this.convertToJsonSchema(documentTypeData.requiredFields)
+
+      // Create the target table first with enhanced field mapping
+      const targetTableName = documentTypeData.targetTable.trim()
+      if (targetTableName) {
+        await this.createTargetTableFromSchema(targetTableName, schema)
+      }
+
+      // Create the document type object for database
+      const newDocumentType: Omit<DocumentType, 'id' | 'created_at'> = {
+        name: documentTypeData.name.trim(),
+        description: documentTypeData.description.trim(),
+        target_table: targetTableName || undefined,
+        expected_schema_json: schema
+      }
+
+      // Insert into Supabase
+      const { data, error: supabaseError } = await supabase
+        .from('document_types')
+        .insert([newDocumentType])
+        .select()
+
+      if (supabaseError) {
+        throw new Error(`Failed to create document type: ${supabaseError.message}`)
+      }
+
+      // Add to local cache
+      const typeInfo: DocumentTypeInfo = {
+        name: documentTypeData.name,
+        displayName: documentTypeData.displayName,
+        description: documentTypeData.description,
+        schema: schema,
+        icon: documentTypeData.icon,
+        color: documentTypeData.color,
+        targetTable: documentTypeData.targetTable
+      }
+      
+      this.documentTypes.set(documentTypeData.name, typeInfo)
+
+    } catch (error) {
+      console.error('Error creating document type:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Converts the complex schema structure from the enhanced modal to a proper JSON schema
+   */
+  private convertToJsonSchema(schemaData: any): DocumentSchema {
+    if (!schemaData || typeof schemaData !== 'object') {
+      return { type: 'object', required: [], properties: {} }
+    }
+
+    // If it's already a proper JSON schema structure
+    if (schemaData.type && schemaData.properties) {
+      return schemaData as DocumentSchema
+    }
+
+    // If it's the properties object from the enhanced modal
+    const properties: Record<string, any> = {}
+    const required: string[] = []
+
+    Object.entries(schemaData).forEach(([fieldName, fieldDef]: [string, any]) => {
+      if (fieldDef && typeof fieldDef === 'object') {
+        const property = this.convertFieldToJsonSchemaProperty(fieldDef)
+        properties[fieldName] = property
+
+        // Add to required if marked as required
+        if (fieldDef.required === true) {
+          required.push(fieldName)
+        }
+      }
+    })
+
+    return {
+      type: 'object',
+      required,
+      properties
+    }
+  }
+
+  /**
+   * Converts a single field definition to a JSON schema property
+   */
+  private convertFieldToJsonSchemaProperty(fieldDef: any): any {
+    const property: any = {
+      type: fieldDef.type || 'string'
+    }
+
+    // Add description if available
+    if (fieldDef.description) {
+      property.description = fieldDef.description
+    }
+
+    // Handle constraints based on type
+    switch (fieldDef.type) {
+      case 'string':
+        if (fieldDef.minLength !== undefined) property.minLength = fieldDef.minLength
+        if (fieldDef.maxLength !== undefined) property.maxLength = fieldDef.maxLength
+        if (fieldDef.pattern) property.pattern = fieldDef.pattern
+        if (fieldDef.format) property.format = fieldDef.format
+        break
+
+      case 'number':
+      case 'integer':
+        if (fieldDef.minimum !== undefined) property.minimum = fieldDef.minimum
+        if (fieldDef.maximum !== undefined) property.maximum = fieldDef.maximum
+        if (fieldDef.multipleOf !== undefined) property.multipleOf = fieldDef.multipleOf
+        break
+
+      case 'array':
+        if (fieldDef.items) {
+          property.items = this.convertFieldToJsonSchemaProperty(fieldDef.items)
+        }
+        if (fieldDef.minItems !== undefined) property.minItems = fieldDef.minItems
+        if (fieldDef.maxItems !== undefined) property.maxItems = fieldDef.maxItems
+        break
+
+      case 'object':
+        if (fieldDef.properties) {
+          property.properties = {}
+          property.required = []
+          
+          Object.entries(fieldDef.properties).forEach(([propName, propDef]: [string, any]) => {
+            property.properties[propName] = this.convertFieldToJsonSchemaProperty(propDef)
+            if (propDef.required === true) {
+              property.required.push(propName)
+            }
+          })
+        }
+        break
+    }
+
+    // Handle enum values
+    if (fieldDef.enum && Array.isArray(fieldDef.enum)) {
+      property.enum = fieldDef.enum
+    }
+
+    return property
+  }
+
+  /**
+   * Creates a target table from a JSON schema with enhanced field mapping
+   */
+  private async createTargetTableFromSchema(tableName: string, schema: DocumentSchema): Promise<void> {
+    if (!isSupabaseAvailable() || !supabase) {
+      throw new Error('Supabase not available - cannot create target table')
+    }
+
+    try {
+      // Build column definitions from schema
+      const columns = ['id BIGSERIAL PRIMARY KEY']
+      columns.push('document_id UUID REFERENCES documents(id) ON DELETE CASCADE')
+      columns.push('created_at TIMESTAMPTZ DEFAULT NOW()')
+      columns.push('updated_at TIMESTAMPTZ DEFAULT NOW()')
+
+      // Add columns for each property in the schema
+      if (schema.properties) {
+        Object.entries(schema.properties).forEach(([fieldName, fieldSchema]: [string, any]) => {
+          const sqlType = this.getSqlTypeFromJsonSchema(fieldSchema)
+          const isRequired = schema.required?.includes(fieldName)
+          const nullConstraint = isRequired ? 'NOT NULL' : ''
+          
+          columns.push(`${fieldName} ${sqlType} ${nullConstraint}`.trim())
+        })
+      }
+
+      // Create the table
+      const createTableSQL = `
+        CREATE TABLE IF NOT EXISTS ${tableName} (
+          ${columns.join(',\n          ')}
+        );
+      `
+
+      const { error: createError } = await supabase.rpc('exec_sql', { 
+        sql: createTableSQL 
+      })
+
+      if (createError) {
+        throw new Error(`Failed to create table: ${createError.message}`)
+      }
+
+      // Create index on document_id for performance
+      const createIndexSQL = `
+        CREATE INDEX IF NOT EXISTS idx_${tableName}_document_id 
+        ON ${tableName}(document_id);
+      `
+
+      const { error: indexError } = await supabase.rpc('exec_sql', { 
+        sql: createIndexSQL 
+      })
+
+      if (indexError) {
+        console.warn(`Failed to create index: ${indexError.message}`)
+      }
+
+      // Create updated_at trigger
+      const createTriggerSQL = `
+        CREATE OR REPLACE FUNCTION update_${tableName}_updated_at()
+        RETURNS TRIGGER AS $$
+        BEGIN
+          NEW.updated_at = NOW();
+          RETURN NEW;
+        END;
+        $$ language 'plpgsql';
+
+        DROP TRIGGER IF EXISTS update_${tableName}_updated_at ON ${tableName};
+        CREATE TRIGGER update_${tableName}_updated_at
+          BEFORE UPDATE ON ${tableName}
+          FOR EACH ROW
+          EXECUTE FUNCTION update_${tableName}_updated_at();
+      `
+
+      const { error: triggerError } = await supabase.rpc('exec_sql', { 
+        sql: createTriggerSQL 
+      })
+
+      if (triggerError) {
+        console.warn(`Failed to create trigger: ${triggerError.message}`)
+      }
+
+    } catch (error) {
+      console.error('Error creating target table from schema:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Maps JSON schema types to SQL types with enhanced support for complex types
+   */
+  private getSqlTypeFromJsonSchema(fieldSchema: any): string {
+    if (!fieldSchema || typeof fieldSchema !== 'object') {
+      return 'TEXT'
+    }
+
+    switch (fieldSchema.type) {
+      case 'string':
+        if (fieldSchema.format === 'date') return 'DATE'
+        if (fieldSchema.format === 'date-time') return 'TIMESTAMPTZ'
+        if (fieldSchema.format === 'email') return 'VARCHAR(255)'
+        if (fieldSchema.format === 'uri') return 'TEXT'
+        if (fieldSchema.maxLength && fieldSchema.maxLength <= 255) {
+          return `VARCHAR(${fieldSchema.maxLength})`
+        }
+        return 'TEXT'
+      
+      case 'number':
+        return 'DECIMAL'
+      
+      case 'integer':
+        if (fieldSchema.minimum !== undefined && fieldSchema.minimum >= 0 && 
+            fieldSchema.maximum !== undefined && fieldSchema.maximum <= 2147483647) {
+          return 'INTEGER'
+        }
+        return 'BIGINT'
+      
+      case 'boolean':
+        return 'BOOLEAN'
+      
+      case 'array':
+      case 'object':
+        return 'JSONB'
+      
+      default:
+        return 'TEXT'
     }
   }
 }

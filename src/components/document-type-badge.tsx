@@ -162,22 +162,11 @@ export function DocumentTypeBadge({ document, showValidation = true, size = 'md'
             getSizeClasses,
             documentType?.color || 'bg-gray-100 text-gray-800'
           )}
-          title={
-            validation 
-              ? `${documentType?.displayName || 'Unknown'} - ${validation.isValid ? 'Valid' : `${totalErrors} errors`}` 
-              : documentType?.displayName || 'Unknown Type'
-          }
+          title={documentType?.displayName || 'Unknown Type'}
         >
           {getIcon}
           <span>{documentType?.displayName || 'Unknown Type'}</span>
-          {getValidationIcon}
         </Badge>
-        
-        {validation && !validation.isValid && showValidation && totalErrors > 0 && (
-          <div className="text-xs text-muted-foreground">
-            {totalErrors} error{totalErrors !== 1 ? 's' : ''}
-          </div>
-        )}
       </div>
     )
   } catch (error) {

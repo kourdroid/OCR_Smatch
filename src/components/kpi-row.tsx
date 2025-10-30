@@ -27,7 +27,7 @@ export function KPIRow({ data }: KPIRowProps) {
           <div className="text-2xl font-bold">{data.documentsToday}</div>
           <Badge variant="secondary" className="mt-2 text-green-600 bg-green-50 dark:bg-green-900/20">
             <TrendingUp className="w-3 h-3 mr-1" />
-            +12% from yesterday
+            +3.2% from yesterday
           </Badge>
         </CardContent>
       </Card>
@@ -46,7 +46,7 @@ export function KPIRow({ data }: KPIRowProps) {
           <div className="text-2xl font-bold">{data.extractionRate}%</div>
           <Badge variant="secondary" className="mt-2 text-green-600 bg-green-50 dark:bg-green-900/20">
             <TrendingUp className="w-3 h-3 mr-1" />
-            +2.1% this week
+            +1.8% this week
           </Badge>
         </CardContent>
       </Card>

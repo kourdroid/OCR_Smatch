@@ -43,7 +43,7 @@ function FieldWithConfidence({ label, value, fieldName, type = "text", onChange,
           />
         ) : type === "textarea" ? (
           <textarea
-            value={value}
+            value={typeof value === 'object' && value !== null ? JSON.stringify(value, null, 2) : (value || '')}
             onChange={(e) => onChange(e.target.value)}
             rows={3}
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -51,14 +51,16 @@ function FieldWithConfidence({ label, value, fieldName, type = "text", onChange,
         ) : (
           <input
             type="text"
-            value={value}
+            value={typeof value === 'object' && value !== null ? JSON.stringify(value, null, 2) : (value || '')}
             onChange={(e) => onChange(e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         )
       ) : (
         <div className="p-2 rounded border bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white">
-          {type === "number" ? (value || 0) : (value || '—')}
+          {type === "number" ? (value || 0) : 
+           typeof value === 'object' && value !== null ? JSON.stringify(value, null, 2) : 
+           (value || '—')}
         </div>
       )}
     </div>

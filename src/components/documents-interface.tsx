@@ -9,8 +9,9 @@ import { EmptyState } from './empty-state'
 import { CommandBar } from './command-bar'
 import { RealTimeIndicator } from './real-time-indicator'
 import { ConfidenceReview } from './confidence-review'
+import AddDocumentTypeModal from './add-document-type-modal'
 import { Document, FilterState, KPIData, DocumentRow, DocumentGroup, DatabaseRow, AuditEvent } from '@/types/document'
-import { supabase } from '@/lib/supabase'
+import { supabase, isSupabaseAvailable } from '@/lib/supabase'
 import { documentSchemaService } from '@/lib/document-schema'
 import { useRealTime } from '@/hooks/use-real-time'
 import { 
@@ -25,16 +26,15 @@ import {
   SidebarMenu, 
   SidebarMenuButton, 
   SidebarMenuItem, 
-  SidebarProvider, 
-  SidebarTrigger 
+  SidebarProvider 
 } from '@/components/ui/sidebar'
-import { FileText, Clock, AlertTriangle, CheckCircle, BarChart3, Settings, LucideIcon } from 'lucide-react'
+import { FileText, Clock, AlertTriangle, CheckCircle, BarChart3, Settings, Plus } from 'lucide-react'
 
 export function DocumentsInterface({ initialDocuments }: { initialDocuments: Document[] }) {
   const [documents, setDocuments] = useState<Document[]>(initialDocuments || [])
   const [kpiData, setKPIData] = useState<KPIData>({ documentsToday: 0, extractionRate: 0, avgProcessingTime: 0 })
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null)
-  const [isSideSheetOpen, setIsSideSheetOpen] = useState(false)
+  const [, setIsSideSheetOpen] = useState(false)
   const [isCommandBarOpen, setIsCommandBarOpen] = useState(false)
   const [isConfidenceReviewOpen, setIsConfidenceReviewOpen] = useState(false)
   const [reviewDocument, setReviewDocument] = useState<Document | null>(null)
@@ -49,6 +49,7 @@ export function DocumentsInterface({ initialDocuments }: { initialDocuments: Doc
   })
 
   const [documentTypes, setDocumentTypes] = useState<Array<{name: string, displayName: string, icon: string}>>([]);
+  const [isAddDocumentTypeModalOpen, setIsAddDocumentTypeModalOpen] = useState(false)
 
   // Real-time functionality
   const {
@@ -150,42 +151,65 @@ export function DocumentsInterface({ initialDocuments }: { initialDocuments: Doc
   // Search in Supabase when search term changes
   useEffect(() => {
     const run = async () => {
+      // Skip if Supabase is not available
+      if (!isSupabaseAvailable() || !supabase) {
+        console.warn('Supabase not available - search functionality disabled')
+        return
+      }
+
       const q = filters.search?.trim()
       if (!q) {
         // Reload first page when clearing search
-        const { data } = await supabase
-          .from('documents')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(25)
-        setDocuments((data || []).map((row: DatabaseRow) => ({
-          id: String(row.id ?? crypto.randomUUID()),
-          status: (row.status ?? 'extracted') as Document['status'],
-          type: (row.type ?? 'OTHER') as Document['type'],
-          documentNumber: String(row.document_number ?? ''),
-          amount: Number(row.amount ?? 0),
-          currency: String(row.currency ?? 'USD'),
-          supplier: String(row.supplier ?? 'Unknown'),
-          channel: (row.channel ?? 'gmail') as Document['channel'],
-          senderEmail: String(row.sender_email ?? ''),
-          fileType: (row.file_type ?? 'pdf') as Document['fileType'],
-          processingTime: Number(row.processing_time ?? 0),
-          receivedAt: new Date(row.received_at ?? row.created_at ?? Date.now()),
-          confidence: Number(row.confidence ?? 0.9),
-          payload: row.payload ?? {},
-          thumbnails: row.thumbnails ?? [],
-          auditTimeline: (row.document_events ?? []) as AuditEvent[],
-          downloadUrl: row.download_url ?? undefined,
-        })))
+        try {
+          const { data, error } = await supabase
+            .from('documents')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(25)
+          
+          if (error) {
+            console.error('Supabase error during reload:', error)
+            return
+          }
+
+          setDocuments((data || []).map((row: DatabaseRow) => ({
+            id: String(row.id ?? crypto.randomUUID()),
+            status: (row.status ?? 'extracted') as Document['status'],
+            type: (row.type ?? 'OTHER') as Document['type'],
+            documentNumber: String(row.document_number ?? ''),
+            amount: Number(row.amount ?? 0),
+            currency: String(row.currency ?? 'USD'),
+            supplier: String(row.supplier ?? 'Unknown'),
+            channel: (row.channel ?? 'gmail') as Document['channel'],
+            senderEmail: String(row.sender_email ?? ''),
+            fileType: (row.file_type ?? 'pdf') as Document['fileType'],
+            processingTime: Number(row.processing_time ?? 0),
+            receivedAt: new Date(row.received_at ?? row.created_at ?? Date.now()),
+            confidence: Number(row.confidence ?? 0.9),
+            payload: row.payload ?? {},
+            thumbnails: row.thumbnails ?? [],
+            auditTimeline: (row.document_events ?? []) as AuditEvent[],
+            downloadUrl: row.download_url ?? undefined,
+          })))
+        } catch (err) {
+          console.error('Failed to reload documents:', err)
+        }
         return
       }
-      const { data, error } = await supabase
-        .from('documents')
-        .select('*')
-        .textSearch('payload', q)
-        .order('created_at', { ascending: false })
-        .range(0, 49)
-      if (!error) {
+
+      try {
+        const { data, error } = await supabase
+          .from('documents')
+          .select('*')
+          .textSearch('payload', q)
+          .order('created_at', { ascending: false })
+          .range(0, 49)
+        
+        if (error) {
+          console.error('Supabase error during search:', error)
+          return
+        }
+
         setDocuments((data || []).map((row: DatabaseRow) => ({
           id: String(row.id ?? crypto.randomUUID()),
           status: (row.status ?? 'extracted') as Document['status'],
@@ -205,6 +229,8 @@ export function DocumentsInterface({ initialDocuments }: { initialDocuments: Doc
           auditTimeline: (row.document_events ?? []) as AuditEvent[],
           downloadUrl: row.download_url ?? undefined,
         })))
+      } catch (err) {
+        console.error('Failed to search documents:', err)
       }
     }
     const timer = setTimeout(run, 250)
@@ -337,6 +363,102 @@ export function DocumentsInterface({ initialDocuments }: { initialDocuments: Doc
     setReviewDocument(null)
   }
 
+  // Document type management handlers
+  const handleAddDocumentType = async (documentType: {
+    name: string;
+    description: string;
+    color: string;
+    icon: string;
+    targetTable: string;
+    requiredFields: Array<{
+      name: string;
+      displayLabel: string;
+      type: string;
+      required: boolean;
+    }>;
+  }) => {
+    try {
+      // Prepare data for n8n webhook
+      const webhookData = {
+        action: 'create_document_type',
+        timestamp: new Date().toISOString(),
+        data: {
+          name: documentType.name,
+          displayName: documentType.name,
+          description: documentType.description,
+          targetTable: documentType.targetTable,
+          icon: documentType.icon,
+          color: documentType.color,
+          requiredFields: documentType.requiredFields.map(field => ({
+            name: field.name,
+            displayLabel: field.displayLabel,
+            type: field.type === 'textarea' ? 'string' : field.type === 'number' ? 'integer' : field.type,
+            required: field.required
+          }))
+        }
+      }
+
+      // Send data to n8n webhook
+      const response = await fetch('https://n8n.srv1078911.hstgr.cloud/webhook/d0b95baf-39b1-4d77-92ac-1e75e1329306', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(webhookData)
+      })
+
+      if (!response.ok) {
+        throw new Error(`Webhook request failed: ${response.status} ${response.statusText}`)
+      }
+
+      const result = await response.json()
+      console.log('Document type sent to webhook successfully:', result)
+
+      // Handle success response from n8n
+      if (result.ok && result.documentTypeId) {
+        // Import toast dynamically to avoid SSR issues
+        const { toast } = await import('sonner')
+        toast.success('Document Type Created Successfully!', {
+          description: `Document type "${documentType.name}" has been created with ID: ${result.documentTypeId}. Table "${documentType.targetTable}" is ready to use.`,
+          duration: 5000,
+        })
+        
+        // Log the complete response for debugging
+        console.log('Document type created with details:', {
+          id: result.documentTypeId,
+          icon: result.icon,
+          color: result.color,
+          name: documentType.name,
+          targetTable: documentType.targetTable
+        })
+      } else if (result.ok) {
+        // Handle partial success or other responses
+        const { toast } = await import('sonner')
+        toast.info('Document Type Submitted', {
+          description: 'Your document type has been submitted for processing.',
+          duration: 3000,
+        })
+      } else {
+        // Handle non-ok responses
+        const { toast } = await import('sonner')
+        toast.warning('Document Type Processing', {
+          description: 'Your document type is being processed. Please check back later.',
+          duration: 4000,
+        })
+      }
+
+    } catch (error) {
+      console.error('Failed to send document type to webhook:', error)
+      // Show error toast
+      const { toast } = await import('sonner')
+      toast.error('Failed to Create Document Type', {
+        description: 'There was an error submitting your document type. Please try again.',
+        duration: 5000,
+      })
+      throw error
+    }
+  }
+
   return (
     <SidebarProvider>
       <div className="min-h-screen bg-background flex mx-auto w-full">
@@ -397,6 +519,15 @@ export function DocumentsInterface({ initialDocuments }: { initialDocuments: Doc
               <SidebarGroupLabel>Document Types</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton 
+                      onClick={() => setIsAddDocumentTypeModalOpen(true)}
+                      className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 border border-dashed border-blue-300 dark:border-blue-600 mb-2"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Add Document Type
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
                   {documentTypes.map((docType) => (
                     <SidebarMenuItem key={docType.name}>
                       <SidebarMenuButton 
@@ -503,6 +634,12 @@ export function DocumentsInterface({ initialDocuments }: { initialDocuments: Doc
         onClose={() => setIsCommandBarOpen(false)}
         documents={documents}
         onDocumentSelect={setSelectedDocument}
+      />
+
+      <AddDocumentTypeModal
+        isOpen={isAddDocumentTypeModalOpen}
+        onClose={() => setIsAddDocumentTypeModalOpen(false)}
+        onAdd={handleAddDocumentType}
       />
     </SidebarProvider>
   )

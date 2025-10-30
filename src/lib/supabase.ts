@@ -9,4 +9,8 @@ if (!url || !anon) {
   console.warn('[Supabase] NEXT_PUBLIC_ env keys are missing. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.')
 }
 
-export const supabase = createClient(url || '', anon || '')
+// Only create client if we have valid environment variables
+export const supabase = (url && anon) ? createClient(url, anon) : null
+
+// Helper function to check if Supabase is available
+export const isSupabaseAvailable = () => Boolean(url && anon && supabase)

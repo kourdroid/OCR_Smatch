@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { Document, KPIData } from '@/types/document'
-import { supabase } from '@/lib/supabase'
+import { Document, KPIData, DatabaseRow } from '@/types/document'
+import { supabase, isSupabaseAvailable } from '@/lib/supabase'
+import { mapRowToDocument } from '@/lib/document-mapper'
 
 interface UseRealTimeOptions {
   documents: Document[]
@@ -11,7 +12,19 @@ interface UseRealTimeOptions {
 
 export function useRealTime({ documents, kpiData, onDocumentsUpdate, onKPIUpdate }: UseRealTimeOptions) {
   const [isConnected, setIsConnected] = useState(true)
-  const [lastUpdate, setLastUpdate] = useState<Date>(new Date())
+  
+  // Initialize lastUpdate based on the most recent document's receivedAt time
+  const [lastUpdate, setLastUpdate] = useState<Date>(() => {
+    if (documents && documents.length > 0) {
+      // Find the most recent document by receivedAt time
+      const mostRecentDoc = documents.reduce((latest, current) => {
+        return current.receivedAt > latest.receivedAt ? current : latest
+      })
+      return mostRecentDoc.receivedAt
+    }
+    return new Date()
+  })
+  
   const [newDocumentCount, setNewDocumentCount] = useState(0)
 
 
@@ -23,6 +36,13 @@ export function useRealTime({ documents, kpiData, onDocumentsUpdate, onKPIUpdate
     let channel: any = null
     
     const setupRealTimeSubscription = async () => {
+      // Skip if Supabase is not available
+      if (!isSupabaseAvailable() || !supabase) {
+        console.warn('Supabase not available - real-time updates disabled')
+        setIsConnected(false)
+        return
+      }
+
       try {
         // Subscribe to documents table changes
         channel = supabase
@@ -37,32 +57,40 @@ export function useRealTime({ documents, kpiData, onDocumentsUpdate, onKPIUpdate
             (payload) => {
               console.log('Real-time update received:', payload)
               
-              if (payload.eventType === 'INSERT') {
-                // New document inserted
-                const newDoc = payload.new as Document
-                if (newDoc) {
-                  onDocumentsUpdate((prevDocs: Document[]) => [newDoc, ...prevDocs])
-                  setNewDocumentCount(prev => prev + 1)
-                  setLastUpdate(new Date())
+              try {
+                if (payload.eventType === 'INSERT') {
+                  // New document inserted
+                  const newRow = payload.new as DatabaseRow
+                  if (newRow) {
+                    const newDoc = mapRowToDocument(newRow)
+                    onDocumentsUpdate((prevDocs: Document[]) => [newDoc, ...prevDocs])
+                    setNewDocumentCount(prev => prev + 1)
+                    setLastUpdate(new Date())
+                  }
+                } else if (payload.eventType === 'UPDATE') {
+                  // Document updated
+                  const updatedRow = payload.new as DatabaseRow
+                  if (updatedRow) {
+                    const updatedDoc = mapRowToDocument(updatedRow)
+                    onDocumentsUpdate((prevDocs: Document[]) => 
+                      prevDocs.map(doc => doc.id === updatedDoc.id ? updatedDoc : doc)
+                    )
+                    setLastUpdate(new Date())
+                  }
+                } else if (payload.eventType === 'DELETE') {
+                  // Document deleted
+                  const deletedRow = payload.old as DatabaseRow
+                  if (deletedRow) {
+                    const deletedId = String(deletedRow.id ?? deletedRow.document_id)
+                    onDocumentsUpdate((prevDocs: Document[]) => 
+                      prevDocs.filter(doc => doc.id !== deletedId)
+                    )
+                    setLastUpdate(new Date())
+                  }
                 }
-              } else if (payload.eventType === 'UPDATE') {
-                // Document updated
-                const updatedDoc = payload.new as Document
-                if (updatedDoc) {
-                  onDocumentsUpdate((prevDocs: Document[]) => 
-                    prevDocs.map(doc => doc.id === updatedDoc.id ? updatedDoc : doc)
-                  )
-                  setLastUpdate(new Date())
-                }
-              } else if (payload.eventType === 'DELETE') {
-                // Document deleted
-                const deletedDoc = payload.old as Document
-                if (deletedDoc) {
-                  onDocumentsUpdate((prevDocs: Document[]) => 
-                    prevDocs.filter(doc => doc.id !== deletedDoc.id)
-                  )
-                  setLastUpdate(new Date())
-                }
+              } catch (error) {
+                console.error('Error processing real-time update:', error, payload)
+                // Don't crash the app, just log the error
               }
             }
           )
@@ -76,6 +104,7 @@ export function useRealTime({ documents, kpiData, onDocumentsUpdate, onKPIUpdate
           })
       } catch (error) {
         console.error('Failed to setup real-time subscription:', error)
+        setIsConnected(false)
         // Connection will be handled by the fallback simulation
       }
     }
@@ -83,7 +112,7 @@ export function useRealTime({ documents, kpiData, onDocumentsUpdate, onKPIUpdate
     setupRealTimeSubscription()
 
     return () => {
-      if (channel) {
+      if (channel && supabase) {
         supabase.removeChannel(channel)
       }
     }
@@ -103,6 +132,16 @@ export function useRealTime({ documents, kpiData, onDocumentsUpdate, onKPIUpdate
   }, [])
 
 
+
+  // Update lastUpdate when documents array changes
+  useEffect(() => {
+    if (documents && documents.length > 0) {
+      const mostRecentDoc = documents.reduce((latest, current) => {
+        return current.receivedAt > latest.receivedAt ? current : latest
+      })
+      setLastUpdate(mostRecentDoc.receivedAt)
+    }
+  }, [documents])
 
   // Reset new document count after a delay
   useEffect(() => {
