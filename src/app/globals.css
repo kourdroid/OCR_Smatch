@@ -1,8 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
-
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
@@ -13,25 +11,13 @@
   background-color: #f1f5f9;
 }
 
-.dark ::-webkit-scrollbar-track {
-  background-color: #1e293b;
-}
-
 ::-webkit-scrollbar-thumb {
   background-color: #cbd5e1;
   border-radius: 9999px;
 }
 
-.dark ::-webkit-scrollbar-thumb {
-  background-color: #475569;
-}
-
 ::-webkit-scrollbar-thumb:hover {
   background-color: #94a3b8;
-}
-
-.dark ::-webkit-scrollbar-thumb:hover {
-  background-color: #64748b;
 }
 
 /* Smooth transitions */
@@ -44,7 +30,8 @@
 /* Focus styles */
 .focus-visible:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px #3b82f6, 0 0 0 4px rgba(59, 130, 246, 0.2);
+  /* Brand focus ring: Yellow #FFC30D */
+  box-shadow: 0 0 0 2px #FFC30D, 0 0 0 4px rgba(255, 195, 13, 0.25);
 }
 
 /* Animation for new rows */
@@ -75,6 +62,33 @@
 
 .animate-counter-pulse {
   animation: counterPulse 0.6s ease-in-out;
+}
+
+/* Collapsible animations */
+.collapsible-content {
+  overflow: hidden;
+  transition: all 0.3s ease-in-out;
+}
+
+.collapsible-content[data-state="closed"] {
+  animation: slideUp 0.3s ease-out;
+}
+
+.collapsible-content[data-state="open"] {
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 200px;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+    max-height: 0;
+  }
 }
 
 @theme inline {
@@ -123,8 +137,10 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
+  /* Brand primary color: Yellow */
+  --primary: #FFC30D;
+  /* Prefer readable dark text on bright yellow */
+  --primary-foreground: #1A1A1A;
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
@@ -134,7 +150,8 @@
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  /* Focus ring aligned to brand */
+  --ring: #FFC30D;
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -142,47 +159,16 @@
   --chart-5: oklch(0.769 0.188 70.08);
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
+  /* Sidebar brand accents */
+  --sidebar-primary: #FFC30D;
+  --sidebar-primary-foreground: #1A1A1A;
   --sidebar-accent: oklch(0.97 0 0);
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar-ring: #FFC30D;
 }
 
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
-}
+/* Dark mode removed */
 
 @layer base {
   * {
@@ -190,5 +176,12 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-inter), Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
   }
+}
+
+/* Sidebar/UI overrides for theme */
+/* Force the sidebar container border color to pure black so the seam blends with the black sidebar */
+[data-slot="sidebar-container"] {
+  border-color: #000 !important;
 }

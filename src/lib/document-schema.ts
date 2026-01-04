@@ -66,7 +66,7 @@ class DocumentSchemaService {
     try {
       await this.initializeWithRetry()
     } catch (error) {
-      console.error('Failed to initialize document schema service after retries:', error)
+      console.warn('Schema service init fallback:', error)
       this.initializationError = error instanceof Error ? error.message : 'Unknown error'
       this.loadFallbackData()
     } finally {
@@ -97,13 +97,14 @@ class DocumentSchemaService {
           this.documentTypes.clear()
           data.forEach((docType: DocumentType) => {
             if (this.isValidDocumentType(docType)) {
+              const d: any = docType
               const typeInfo: DocumentTypeInfo = {
                 name: docType.name,
-                displayName: this.getDisplayName(docType.name),
+                displayName: d.display_name || this.getDisplayName(docType.name),
                 description: docType.description || '',
                 schema: this.validateSchema(docType.expected_schema_json) || this.getDefaultSchema(),
-                icon: this.getTypeIcon(docType.name),
-                color: this.getTypeColor(docType.name),
+                icon: d.icon || this.getTypeIcon(docType.name),
+                color: d.color || this.getTypeColor(docType.name),
                 targetTable: docType.target_table || ''
               }
               this.documentTypes.set(docType.name, typeInfo)

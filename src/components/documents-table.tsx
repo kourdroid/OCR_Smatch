@@ -1,45 +1,48 @@
 'use client'
 
 import React, { useState } from 'react'
-import { 
-  FileText, 
-  Receipt, 
-  Ship, 
-  Award, 
-  File, 
-  Mail, 
-  MessageSquare, 
+import {
+  FileText,
+  Receipt,
+  Ship,
+  Award,
+  File,
+  Mail,
+  MessageSquare,
   Send,
   FileSpreadsheet,
   Image,
   Download,
-  ExternalLink,
-  Clock,
-  AlertTriangle,
-  Edit3,
   ChevronUp,
   ChevronDown,
   ChevronRight,
-  Package
+  Package,
 } from 'lucide-react'
 import { Document, DocumentRow, DocumentGroup } from '@/types/document'
-import { cn, formatCurrency, formatRelativeTime, formatProcessingTime, getStatusColor, getConfidenceColor } from '@/lib/utils'
+import { cn, formatCurrency, formatRelativeTime } from '@/lib/utils'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination'
-import { DocumentTypeBadge } from './document-type-badge'
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination'
 
 // SortButton component moved outside to avoid creation during render
-const SortButton = ({ 
-  field, 
-  children, 
-  sortField, 
-  sortDirection, 
-  onSort 
-}: { 
+const SortButton = ({
+  field,
+  children,
+  sortField,
+  sortDirection,
+  onSort
+}: {
   field: keyof Document
   children: React.ReactNode
   sortField: keyof Document | null
@@ -55,8 +58,8 @@ const SortButton = ({
     <span className="flex items-center gap-1">
       {children}
       {sortField === field && (
-        sortDirection === 'asc' ? 
-          <ChevronUp className="h-3 w-3" /> : 
+        sortDirection === 'asc' ?
+          <ChevronUp className="h-3 w-3" /> :
           <ChevronDown className="h-3 w-3" />
       )}
     </span>
@@ -69,6 +72,14 @@ interface DocumentsTableProps {
   selectedDocument: Document | null
   onConfidenceReview?: (document: Document) => void
   onGroupToggle?: (groupId: string) => void
+  itemsPerPage?: number
+  isLoading?: boolean
+  currentPage?: number
+  totalPages?: number
+  onPageChange?: (page: number) => void
+  totalCount?: number
+  isAdmin?: boolean
+  onOrganizationClick?: (orgId: string) => void
 }
 
 const typeIcons = {
@@ -92,12 +103,23 @@ const fileTypeIcons = {
   jpg: Image
 }
 
-export function DocumentsTable({ documentRows, onDocumentSelect, selectedDocument, onConfidenceReview, onGroupToggle }: DocumentsTableProps) {
+export function DocumentsTable({
+  documentRows,
+  onDocumentSelect,
+  selectedDocument,
+  onConfidenceReview,
+  onGroupToggle,
+  itemsPerPage: itemsPerPageProp,
+  isLoading,
+  currentPage = 1,
+  totalPages = 1,
+  onPageChange,
+  totalCount = 0
+}: DocumentsTableProps) {
   const [sortField, setSortField] = useState<keyof Document>('receivedAt')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
-  const [currentPage, setCurrentPage] = useState(1)
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
-  const itemsPerPage = 25
+  const itemsPerPage = itemsPerPageProp ?? 10
 
   const handleSort = (field: keyof Document) => {
     if (sortField === field) {
@@ -122,19 +144,19 @@ export function DocumentsTable({ documentRows, onDocumentSelect, selectedDocumen
   // Sort document rows (groups by their aggregate data, singles by their document data)
   const sortedRows = [...documentRows].sort((a, b) => {
     let aValue, bValue
-    
+
     if (a.type === 'group' && a.group) {
       aValue = a.group.aggregateData.latestReceivedAt
     } else if (a.document) {
       aValue = a.document[sortField]
     }
-    
+
     if (b.type === 'group' && b.group) {
       bValue = b.group.aggregateData.latestReceivedAt
     } else if (b.document) {
       bValue = b.document[sortField]
     }
-    
+
     if (aValue == null && bValue == null) return 0
     if (aValue == null) return sortDirection === 'asc' ? 1 : -1
     if (bValue == null) return sortDirection === 'asc' ? -1 : 1
@@ -143,302 +165,196 @@ export function DocumentsTable({ documentRows, onDocumentSelect, selectedDocumen
     return 0
   })
 
-  const totalPages = Math.ceil(sortedRows.length / itemsPerPage)
-  const startIndex = (currentPage - 1) * itemsPerPage
-  const endIndex = Math.min(startIndex + itemsPerPage, sortedRows.length)
-  const paginatedRows = sortedRows.slice(startIndex, endIndex)
+  // Use props for pagination if available, otherwise fallback (though we expect server-side mostly now)
+  // If server-side, documentRows is already the current page.
+  const paginatedRows = sortedRows
 
   const renderGroupRow = (group: DocumentGroup) => {
-    const isSelected = group.documents.some(doc => selectedDocument?.id === doc.id)
-    const needsReview = group.aggregateData.avgConfidence < 0.85
+    const isSelected = group.documents.some((doc) => selectedDocument?.id === doc.id)
     const isExpanded = expandedGroups.has(group.id)
-    
+    const firstDoc = group.documents[0]
+    const shipper = (firstDoc?.payload?.shipper || firstDoc?.payload?.carrier || firstDoc?.payload?.Shipper) as
+      | string
+      | undefined
+
     return (
       <TableRow
         key={group.id}
         onClick={() => toggleGroupExpansion(group.id)}
-        className={cn(
-          "cursor-pointer transition-colors",
-          isSelected && "bg-muted/50",
-          needsReview && "border-l-4 border-l-amber-400"
-        )}
+        className={cn('cursor-pointer transition-colors', isSelected && 'bg-muted/50')}
       >
-        {/* Status */}
+        {/* ID */}
         <TableCell>
-          <div className="space-y-1">
-            <Badge 
-              variant={group.aggregateData.status === 'extracted' ? 'default' : 
-                     group.aggregateData.status === 'needs review' ? 'secondary' : 
-                     group.aggregateData.status === 'mixed' ? 'outline' : 'destructive'}
-              className="text-xs"
+          <div className="flex items-center gap-2">
+            <Package className="h-4 w-4 text-muted-foreground" />
+            <span className="font-medium">{group.groupKey}</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-4 w-4 p-0"
+              onClick={(e) => {
+                e.stopPropagation()
+                toggleGroupExpansion(group.id)
+              }}
             >
-              {group.aggregateData.status}
-            </Badge>
-            <div className="flex items-center space-x-1">
-              <Badge variant="secondary" className="text-xs">
-                {group.aggregateData.count} docs
-              </Badge>
-              {needsReview && (
-                <Badge 
-                  variant="outline" 
-                  className={cn(
-                    "text-xs",
-                    group.aggregateData.avgConfidence < 0.7 ? "border-red-200 text-red-700" :
-                    "border-amber-200 text-amber-700"
-                  )}
-                >
-                  {Math.round(group.aggregateData.avgConfidence * 100)}%
-                </Badge>
-              )}
-            </div>
+              {isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+            </Button>
           </div>
         </TableCell>
 
-        {/* Document */}
+        {/* Document Type */}
         <TableCell>
-          <div className="flex items-center space-x-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-muted">
-              <Package className="h-4 w-4 text-muted-foreground" />
-            </div>
-            <div className="space-y-1">
-              <div className="font-medium leading-none flex items-center space-x-2">
-                <span>{group.groupKey}</span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-4 w-4 p-0"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    toggleGroupExpansion(group.id)
-                  }}
-                >
-                  {isExpanded ? 
-                    <ChevronDown className="h-3 w-3" /> : 
-                    <ChevronRight className="h-3 w-3" />
-                  }
-                </Button>
-              </div>
-              <Badge variant="outline" className="text-xs">
-                GROUP
-              </Badge>
-            </div>
-          </div>
+          <Badge variant="outline" className="text-xs">
+            GROUP
+          </Badge>
         </TableCell>
 
         {/* Amount */}
         <TableCell>
           <div className="font-medium">
-            {group.aggregateData.totalAmount > 0 ? 
-              formatCurrency(group.aggregateData.totalAmount, group.aggregateData.currency) : '—'}
+            {group.aggregateData.totalAmount > 0
+              ? formatCurrency(group.aggregateData.totalAmount, group.aggregateData.currency)
+              : '—'}
           </div>
         </TableCell>
 
         {/* Supplier */}
         <TableCell>
-          <div className="max-w-[200px] truncate font-medium">
-            {group.documents[0]?.supplier || '—'}
-          </div>
+          <div className="max-w-[200px] truncate font-medium">{firstDoc?.supplier || '—'}</div>
         </TableCell>
 
-        {/* Channel */}
+        {/* Shipper */}
         <TableCell>
-          <div className="flex items-center space-x-2">
-            <Mail className="h-4 w-4 text-muted-foreground" />
-            <div className="space-y-1">
-              <div className="text-sm font-medium">
-                Multiple
-              </div>
-              <div className="text-xs text-muted-foreground">
-                {group.aggregateData.count} sources
-              </div>
-            </div>
-          </div>
+          <div className="max-w-[160px] truncate text-sm">{shipper || '—'}</div>
         </TableCell>
 
         {/* File */}
         <TableCell>
-          <div className="flex items-center space-x-2">
-            <File className="h-4 w-4 text-muted-foreground" />
-            <Badge variant="outline" className="text-xs">
-              MULTI
-            </Badge>
-          </div>
+          <Badge variant="outline" className="text-xs">
+            MULTI
+          </Badge>
         </TableCell>
 
-        {/* Processing Time */}
+        {/* Action */}
         <TableCell>
-          <div className="flex items-center space-x-1 text-sm text-muted-foreground">
-            <Clock className="h-3 w-3" />
-            <span>—</span>
-          </div>
+          <span className="text-muted-foreground">—</span>
         </TableCell>
 
-        {/* Received */}
+        {/* Channel */}
         <TableCell>
-          <div className="text-sm text-muted-foreground">
-            {formatRelativeTime(group.aggregateData.latestReceivedAt)}
-          </div>
+          <div className="text-sm">Multiple</div>
+        </TableCell>
+
+        {/* Time */}
+        <TableCell>
+          <div className="text-sm text-muted-foreground">{formatRelativeTime(group.aggregateData.latestReceivedAt)}</div>
         </TableCell>
       </TableRow>
     )
   }
 
   const renderDocumentRow = (document: Document, isSubRow = false) => {
-    const TypeIcon = typeIcons[document.type as keyof typeof typeIcons] || File
     const ChannelIcon = channelIcons[document.channel as keyof typeof channelIcons] || Mail
     const FileIcon = fileTypeIcons[document.fileType as keyof typeof fileTypeIcons] || File
     const isSelected = selectedDocument?.id === document.id
-    const needsReview = document.confidence < 0.85
+    const typeDisplay: Record<string, string> = {
+      invoice: 'Facture',
+      BL: 'BL',
+      BC: 'BC',
+      CO: 'CO',
+      OTHER: 'Other',
+    }
+    const shipper = (document.payload?.shipper || document.payload?.carrier || document.payload?.Shipper) as
+      | string
+      | undefined
 
     return (
       <TableRow
         key={document.id}
         onClick={() => onDocumentSelect(document)}
-        className={cn(
-          "cursor-pointer transition-colors",
-          isSelected && "bg-muted/50",
-          needsReview && "border-l-4 border-l-amber-400",
-          isSubRow && "bg-muted/20"
-        )}
+        className={cn('cursor-pointer transition-colors border-b border-[#EDEDED]', isSelected && 'bg-muted/50', isSubRow && 'bg-muted/20')}
         aria-selected={isSelected}
       >
-        {/* Status */}
-        <TableCell>
-          <div className="space-y-1">
-            {isSubRow && <div className="w-4" />}
-            <Badge 
-              variant={document.status === 'extracted' ? 'default' : 
-                     document.status === 'needs review' ? 'secondary' : 'destructive'}
-              className="text-xs"
-            >
-              {document.status}
-            </Badge>
-            {needsReview && (
-              <div className="flex items-center justify-between">
-                <Badge 
-                  variant="outline" 
-                  className={cn(
-                    "text-xs",
-                    document.confidence < 0.7 ? "border-red-200 text-red-700" :
-                    document.confidence < 0.85 ? "border-amber-200 text-amber-700" :
-                    "border-green-200 text-green-700"
-                  )}
-                >
-                  {Math.round(document.confidence * 100)}%
-                </Badge>
-                {onConfidenceReview && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 w-6 p-0"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          onConfidenceReview(document)
-                        }}
-                      >
-                        <Edit3 className="h-3 w-3" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Review and edit document</p>
-                    </TooltipContent>
-                  </Tooltip>
-                )}
-              </div>
-            )}
-          </div>
+        {/* ID */}
+        <TableCell className="pl-[26px] text-black">
+          <div className="font-medium">{document.documentNumber || document.id}</div>
         </TableCell>
 
-        {/* Document */}
-        <TableCell>
-          <div className="flex items-center space-x-3">
-            {isSubRow && <div className="w-4 border-l border-muted-foreground/20 ml-2" />}
-            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-muted">
-              <TypeIcon className="h-4 w-4 text-muted-foreground" />
-            </div>
-            <div className="space-y-1">
-              <div className="font-medium leading-none">
-                {document.documentNumber}
-              </div>
-              <DocumentTypeBadge document={document} size="sm" />
-            </div>
-          </div>
+        {/* Document Type */}
+        <TableCell className="text-black">
+          <div className="font-medium">{typeDisplay[document.type] || document.type}</div>
         </TableCell>
 
         {/* Amount */}
-        <TableCell>
+        <TableCell className="text-black">
           <div className="font-medium">
             {document.amount > 0 ? formatCurrency(document.amount, document.currency) : '—'}
           </div>
         </TableCell>
 
         {/* Supplier */}
-        <TableCell>
-          <div className="max-w-[200px] truncate font-medium">
-            {document.supplier}
-          </div>
+        <TableCell className="text-black">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="max-w-[200px] truncate font-medium">{document.supplier}</div>
+            </TooltipTrigger>
+            <TooltipContent>{document.supplier}</TooltipContent>
+          </Tooltip>
+        </TableCell>
+
+        {/* Shipper */}
+        <TableCell className="text-black">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="max-w-[160px] truncate text-sm">{shipper || '—'}</div>
+            </TooltipTrigger>
+            <TooltipContent>{shipper || '—'}</TooltipContent>
+          </Tooltip>
+        </TableCell>
+
+        {/* File */}
+        <TableCell className="text-black">
+          <Badge variant="outline" className="text-xs uppercase">
+            {document.fileType}
+          </Badge>
+        </TableCell>
+
+        {/* Action */}
+        <TableCell className="pr-[78px]">
+          {document.status === 'processing' ? (
+            <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200 animate-pulse">
+              Processing...
+            </Badge>
+          ) : document.status === 'failed' ? (
+            <Badge variant="destructive">Failed</Badge>
+          ) : (
+            <Button
+              className="rounded-full bg-black text-white hover:bg-zinc-800"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation()
+                if (document.downloadUrl) {
+                  window.open(document.downloadUrl, '_blank')
+                }
+              }}
+              disabled={!document.downloadUrl}
+            >
+              Download
+            </Button>
+          )}
         </TableCell>
 
         {/* Channel */}
         <TableCell>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-2">
             <ChannelIcon className="h-4 w-4 text-muted-foreground" />
-            <div className="space-y-1">
-              <div className="text-sm font-medium capitalize">
-                {document.channel}
-              </div>
-              <div className="text-xs text-muted-foreground max-w-[120px] truncate">
-                {document.senderEmail}
-              </div>
-            </div>
+            <span className="capitalize">{document.channel}</span>
           </div>
         </TableCell>
 
-        {/* File */}
+        {/* Time */}
         <TableCell>
-          <div className="flex items-center space-x-2">
-            <FileIcon className="h-4 w-4 text-muted-foreground" />
-            <Badge variant="outline" className="text-xs uppercase">
-              {document.fileType}
-            </Badge>
-            {document.downloadUrl && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 w-6 p-0"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      window.open(document.downloadUrl, '_blank')
-                    }}
-                  >
-                    <Download className="h-3 w-3" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Download document</p>
-                </TooltipContent>
-              </Tooltip>
-            )}
-          </div>
-        </TableCell>
-
-        {/* Processing Time */}
-        <TableCell>
-          <div className="flex items-center space-x-1 text-sm text-muted-foreground">
-            <Clock className="h-3 w-3" />
-            <span>{formatProcessingTime(document.processingTime)}</span>
-          </div>
-        </TableCell>
-
-        {/* Received */}
-        <TableCell>
-          <div className="text-sm text-muted-foreground">
-            {formatRelativeTime(document.receivedAt)}
-          </div>
+          <div className="text-sm text-muted-foreground">{formatRelativeTime(document.receivedAt)}</div>
         </TableCell>
       </TableRow>
     )
@@ -450,37 +366,61 @@ export function DocumentsTable({ documentRows, onDocumentSelect, selectedDocumen
     <TooltipProvider>
       <Card className="border-0 shadow-sm">
         <CardContent className="p-0">
-          <div className="rounded-md border">
+          <div className="rounded-xl border">
             <Table>
-              <TableHeader>
+              <TableHeader className="bg-[#FAFAFA] rounded-t-xl">
                 <TableRow className="hover:bg-transparent">
-                  <TableHead className="w-[120px]">
-                    <SortButton field="status" sortField={sortField} sortDirection={sortDirection} onSort={handleSort}>Status</SortButton>
+                  <TableHead className="text-[#7D7D7D] font-semibold pl-[26px]">
+                    <SortButton field="documentNumber" sortField={sortField} sortDirection={sortDirection} onSort={handleSort}>
+                      ID
+                    </SortButton>
                   </TableHead>
-                  <TableHead>
-                    <SortButton field="documentNumber" sortField={sortField} sortDirection={sortDirection} onSort={handleSort}>Document</SortButton>
+                  <TableHead className="text-[#7D7D7D] font-semibold">
+                    <SortButton field="type" sortField={sortField} sortDirection={sortDirection} onSort={handleSort}>
+                      Document Type
+                    </SortButton>
                   </TableHead>
-                  <TableHead className="w-[120px]">
-                    <SortButton field="amount" sortField={sortField} sortDirection={sortDirection} onSort={handleSort}>Amount</SortButton>
+                  <TableHead className="w-[140px] text-[#7D7D7D] font-semibold">
+                    <SortButton field="amount" sortField={sortField} sortDirection={sortDirection} onSort={handleSort}>
+                      Amount
+                    </SortButton>
                   </TableHead>
-                  <TableHead>
-                    <SortButton field="supplier" sortField={sortField} sortDirection={sortDirection} onSort={handleSort}>Supplier</SortButton>
+                  <TableHead className="text-[#7D7D7D] font-semibold">
+                    <SortButton field="supplier" sortField={sortField} sortDirection={sortDirection} onSort={handleSort}>
+                      Supplier
+                    </SortButton>
                   </TableHead>
-                  <TableHead className="w-[140px]">
-                    <SortButton field="channel" sortField={sortField} sortDirection={sortDirection} onSort={handleSort}>Channel</SortButton>
+                  <TableHead className="w-[160px] text-[#7D7D7D] font-semibold">Shipper</TableHead>
+                  <TableHead className="w-[100px] text-[#7D7D7D] font-semibold">File</TableHead>
+                  <TableHead className="w-[140px] text-[#7D7D7D] font-semibold">Action</TableHead>
+                  <TableHead className="w-[140px] text-[#7D7D7D] font-semibold">
+                    <SortButton field="channel" sortField={sortField} sortDirection={sortDirection} onSort={handleSort}>
+                      Channel
+                    </SortButton>
                   </TableHead>
-                  <TableHead className="w-[100px]">
-                    <SortButton field="fileType" sortField={sortField} sortDirection={sortDirection} onSort={handleSort}>File</SortButton>
-                  </TableHead>
-                  <TableHead className="w-[120px]">
-                    <SortButton field="processingTime" sortField={sortField} sortDirection={sortDirection} onSort={handleSort}>Processing</SortButton>
-                  </TableHead>
-                  <TableHead className="w-[120px]">
-                    <SortButton field="receivedAt" sortField={sortField} sortDirection={sortDirection} onSort={handleSort}>Received</SortButton>
+                  <TableHead className="w-[120px] text-[#7D7D7D] font-semibold pr-[78px]">
+                    <SortButton field="receivedAt" sortField={sortField} sortDirection={sortDirection} onSort={handleSort}>
+                      Time
+                    </SortButton>
                   </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
+                {isLoading && (
+                  Array.from({ length: 5 }).map((_, idx) => (
+                    <TableRow key={`skeleton-${idx}`} className="border-b border-[#EDEDED]">
+                      <TableCell className="pl-[26px]"><div className="bg-muted h-4 w-24 rounded" /></TableCell>
+                      <TableCell><div className="bg-muted h-4 w-20 rounded" /></TableCell>
+                      <TableCell><div className="bg-muted h-4 w-16 rounded" /></TableCell>
+                      <TableCell><div className="bg-muted h-4 w-32 rounded" /></TableCell>
+                      <TableCell><div className="bg-muted h-4 w-28 rounded" /></TableCell>
+                      <TableCell><div className="bg-muted h-4 w-12 rounded" /></TableCell>
+                      <TableCell><div className="bg-muted h-8 w-24 rounded" /></TableCell>
+                      <TableCell><div className="bg-muted h-4 w-20 rounded" /></TableCell>
+                      <TableCell><div className="bg-muted h-4 w-16 rounded" /></TableCell>
+                    </TableRow>
+                  ))
+                )}
                 {paginatedRows.map((row) => {
                   if (row.type === 'group' && row.group) {
                     const isExpanded = expandedGroups.has(row.group.id)
@@ -503,22 +443,22 @@ export function DocumentsTable({ documentRows, onDocumentSelect, selectedDocumen
             </Table>
           </div>
         </CardContent>
-        
+
         <CardFooter className="flex items-center justify-between px-6 py-4">
           <div className="text-sm text-muted-foreground">
-            Showing {startIndex + 1}-{Math.min(endIndex, documentRows.length)} of {documentRows.length} rows
+            Showing {(currentPage - 1) * itemsPerPage + 1}-{Math.min(currentPage * itemsPerPage, totalCount)} of {totalCount} rows
           </div>
-          
+
           {totalPages > 1 && (
             <Pagination>
               <PaginationContent>
                 <PaginationItem>
-                  <PaginationPrevious 
-                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  <PaginationPrevious
+                    onClick={() => onPageChange?.(Math.max(1, currentPage - 1))}
                     className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
                   />
                 </PaginationItem>
-                
+
                 {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                   let pageNumber;
                   if (totalPages <= 5) {
@@ -530,11 +470,11 @@ export function DocumentsTable({ documentRows, onDocumentSelect, selectedDocumen
                   } else {
                     pageNumber = currentPage - 2 + i;
                   }
-                  
+
                   return (
                     <PaginationItem key={pageNumber}>
                       <PaginationLink
-                        onClick={() => setCurrentPage(pageNumber)}
+                        onClick={() => onPageChange?.(pageNumber)}
                         isActive={currentPage === pageNumber}
                         className="cursor-pointer"
                       >
@@ -543,7 +483,7 @@ export function DocumentsTable({ documentRows, onDocumentSelect, selectedDocumen
                     </PaginationItem>
                   );
                 })}
-                
+
                 {totalPages > 5 && currentPage < totalPages - 2 && (
                   <>
                     <PaginationItem>
@@ -551,7 +491,7 @@ export function DocumentsTable({ documentRows, onDocumentSelect, selectedDocumen
                     </PaginationItem>
                     <PaginationItem>
                       <PaginationLink
-                        onClick={() => setCurrentPage(totalPages)}
+                        onClick={() => onPageChange?.(totalPages)}
                         className="cursor-pointer"
                       >
                         {totalPages}
@@ -559,10 +499,10 @@ export function DocumentsTable({ documentRows, onDocumentSelect, selectedDocumen
                     </PaginationItem>
                   </>
                 )}
-                
+
                 <PaginationItem>
-                  <PaginationNext 
-                    onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                  <PaginationNext
+                    onClick={() => onPageChange?.(Math.min(totalPages, currentPage + 1))}
                     className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
                   />
                 </PaginationItem>

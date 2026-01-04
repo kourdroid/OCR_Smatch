@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { Document, KPIData, DatabaseRow } from '@/types/document'
 import { supabase, isSupabaseAvailable } from '@/lib/supabase'
 import { mapRowToDocument } from '@/lib/document-mapper'
+import { useAuthStore } from '@/stores/auth-store'
 
 interface UseRealTimeOptions {
   documents: Document[]
@@ -12,7 +13,8 @@ interface UseRealTimeOptions {
 
 export function useRealTime({ documents, kpiData, onDocumentsUpdate, onKPIUpdate }: UseRealTimeOptions) {
   const [isConnected, setIsConnected] = useState(true)
-  
+  const { organization } = useAuthStore()
+
   // Initialize lastUpdate based on the most recent document's receivedAt time
   const [lastUpdate, setLastUpdate] = useState<Date>(() => {
     if (documents && documents.length > 0) {
@@ -24,17 +26,13 @@ export function useRealTime({ documents, kpiData, onDocumentsUpdate, onKPIUpdate
     }
     return new Date()
   })
-  
+
   const [newDocumentCount, setNewDocumentCount] = useState(0)
-
-
-
-
 
   // Supabase real-time subscription
   useEffect(() => {
     let channel: any = null
-    
+
     const setupRealTimeSubscription = async () => {
       // Skip if Supabase is not available
       if (!isSupabaseAvailable() || !supabase) {
@@ -45,6 +43,11 @@ export function useRealTime({ documents, kpiData, onDocumentsUpdate, onKPIUpdate
 
       try {
         // Subscribe to documents table changes
+        // Filter by organization_id if available to reduce noise
+        const filter = organization?.id
+          ? `organization_id=eq.${organization.id}`
+          : undefined
+
         channel = supabase
           .channel('documents-changes')
           .on(
@@ -52,11 +55,12 @@ export function useRealTime({ documents, kpiData, onDocumentsUpdate, onKPIUpdate
             {
               event: '*', // Listen to all events (INSERT, UPDATE, DELETE)
               schema: 'public',
-              table: 'documents'
+              table: 'documents',
+              filter: filter
             },
             (payload) => {
               console.log('Real-time update received:', payload)
-              
+
               try {
                 if (payload.eventType === 'INSERT') {
                   // New document inserted
@@ -72,7 +76,7 @@ export function useRealTime({ documents, kpiData, onDocumentsUpdate, onKPIUpdate
                   const updatedRow = payload.new as DatabaseRow
                   if (updatedRow) {
                     const updatedDoc = mapRowToDocument(updatedRow)
-                    onDocumentsUpdate((prevDocs: Document[]) => 
+                    onDocumentsUpdate((prevDocs: Document[]) =>
                       prevDocs.map(doc => doc.id === updatedDoc.id ? updatedDoc : doc)
                     )
                     setLastUpdate(new Date())
@@ -82,7 +86,7 @@ export function useRealTime({ documents, kpiData, onDocumentsUpdate, onKPIUpdate
                   const deletedRow = payload.old as DatabaseRow
                   if (deletedRow) {
                     const deletedId = String(deletedRow.id ?? deletedRow.document_id)
-                    onDocumentsUpdate((prevDocs: Document[]) => 
+                    onDocumentsUpdate((prevDocs: Document[]) =>
                       prevDocs.filter(doc => doc.id !== deletedId)
                     )
                     setLastUpdate(new Date())
@@ -90,7 +94,6 @@ export function useRealTime({ documents, kpiData, onDocumentsUpdate, onKPIUpdate
                 }
               } catch (error) {
                 console.error('Error processing real-time update:', error, payload)
-                // Don't crash the app, just log the error
               }
             }
           )
@@ -105,7 +108,6 @@ export function useRealTime({ documents, kpiData, onDocumentsUpdate, onKPIUpdate
       } catch (error) {
         console.error('Failed to setup real-time subscription:', error)
         setIsConnected(false)
-        // Connection will be handled by the fallback simulation
       }
     }
 
@@ -116,22 +118,7 @@ export function useRealTime({ documents, kpiData, onDocumentsUpdate, onKPIUpdate
         supabase.removeChannel(channel)
       }
     }
-  }, [onDocumentsUpdate])
-
-  // Simulate connection status changes (fallback when no real DB)
-  useEffect(() => {
-    const connectionInterval = setInterval(() => {
-      // Occasionally simulate connection issues
-      if (Math.random() < 0.05) {
-        setIsConnected(false)
-        setTimeout(() => setIsConnected(true), 2000)
-      }
-    }, 10000)
-
-    return () => clearInterval(connectionInterval)
-  }, [])
-
-
+  }, [onDocumentsUpdate, organization?.id])
 
   // Update lastUpdate when documents array changes
   useEffect(() => {

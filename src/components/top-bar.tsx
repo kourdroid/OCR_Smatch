@@ -1,71 +1,74 @@
 'use client'
 
-import { Search, Filter, Moon, Sun, Command, Shield } from 'lucide-react'
+import { Search, Filter, Download } from 'lucide-react'
 import { FilterState } from '@/types/document'
-import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { Separator } from '@/components/ui/separator'
 import { Kbd } from '@/components/ui/kbd'
-import { SidebarTrigger } from '@/components/ui/sidebar'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 interface TopBarProps {
+  title?: string
   filters: FilterState
   onFiltersChange: (filters: FilterState) => void
-  isDarkMode: boolean
-  onDarkModeToggle: (isDark: boolean) => void
   onCommandBarOpen: () => void
+  onFiltersToggle?: () => void
+  onExport?: (format: 'csv' | 'json') => void
+  showSearch?: boolean
+  showExport?: boolean
+  showTimePreset?: boolean
+  timePreset?: 'last24h' | '7d' | '30d' | '90d'
+  onTimePresetChange?: (preset: 'last24h' | '7d' | '30d' | '90d') => void
 }
 
-export function TopBar({ 
-  filters, 
-  onFiltersChange, 
-  isDarkMode, 
-  onDarkModeToggle,
-  onCommandBarOpen 
+export function TopBar({
+  title,
+  filters,
+  onFiltersChange,
+  onCommandBarOpen,
+  onFiltersToggle,
+  onExport,
+  showSearch = true,
+  showExport = true,
+  showTimePreset = false,
+  timePreset,
+  onTimePresetChange,
 }: TopBarProps) {
-  const hasActiveFilters = Object.values(filters).some(v => 
-    Array.isArray(v) ? v.length > 0 : v && typeof v === 'object' ? Object.keys(v).length > 0 : !!v
+  const hasActiveFilters = Object.values(filters).some((v) =>
+    Array.isArray(v)
+      ? v.length > 0
+      : v && typeof v === 'object'
+      ? Object.keys(v).length > 0
+      : !!v
   )
 
   return (
     <TooltipProvider>
-      <header 
-        className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
-        role="banner"
-        aria-label="Main navigation"
-      >
-        <div className="container flex h-16 items-center justify-between px-4">
-          {/* Logo */}
-          <div className="flex items-center space-x-4">
-            <SidebarTrigger />
-            <div className="flex items-center space-x-3" role="img" aria-label="Smatch logo">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-                <span className="text-sm font-bold text-primary-foreground" aria-hidden="true">S</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-lg font-semibold leading-none">
-                  Smatch
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  OCR Platform
-                </span>
-              </div>
-            </div>
-          </div>
+      <div className="flex items-center justify-between px-6 py-3">
+        {/* Title */}
+        <div className="flex items-center gap-3">
+          {title && (
+            <h1 className="text-2xl font-bold">{title}</h1>
+          )}
+        </div>
 
-          {/* Search and Filters */}
-          <div className="flex flex-1 items-center justify-center px-6" role="search" aria-label="Document search">
-            <div className="relative w-full max-w-lg">
+        {/* Search */}
+        {showSearch && (
+          <div className="ml-auto w-[640px]">
+            <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
               <Input
                 type="text"
-                placeholder="Search documents..."
+                placeholder="Search"
                 value={filters.search}
                 onChange={(e) => onFiltersChange({ ...filters, search: e.target.value })}
-                className="pl-10 pr-20"
+                className="pl-10 pr-20 rounded-lg h-[52px]"
                 aria-label="Search documents"
                 aria-describedby="search-help"
               />
@@ -79,7 +82,6 @@ export function TopBar({
                       className="h-6 px-2 text-xs text-muted-foreground"
                       aria-label="Press Cmd+K to open command palette"
                     >
-                      <Command className="mr-1 h-3 w-3" aria-hidden="true" />
                       <Kbd className="text-xs">⌘K</Kbd>
                     </Button>
                   </TooltipTrigger>
@@ -93,78 +95,63 @@ export function TopBar({
               </div>
             </div>
           </div>
+        )}
 
-          {/* Right side controls */}
-          <div className="flex items-center space-x-2" role="toolbar" aria-label="Application controls">
-            {/* Secure mode indicator */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Badge 
-                  variant="secondary"
-                  className="bg-green-50 text-green-700 hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30"
-                  role="status"
-                  aria-label="Secure Mode"
-                >
-                  <Shield className="mr-1 h-3 w-3" aria-hidden="true" />
-                  Secure
-                </Badge>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Secure mode is active</p>
-              </TooltipContent>
-            </Tooltip>
-
-            <Separator orientation="vertical" className="h-6" />
-
-            {/* Filter button */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant={hasActiveFilters ? "default" : "ghost"}
-                  size="sm"
-                  className="relative"
-                  aria-label={hasActiveFilters ? "Filters active" : "Open filters"}
-                >
-                  <Filter className="h-4 w-4" aria-hidden="true" />
-                  {hasActiveFilters && (
-                    <Badge 
-                      variant="destructive" 
-                      className="absolute -right-1 -top-1 h-2 w-2 p-0"
-                      aria-hidden="true"
-                    />
-                  )}
+        {/* Actions */}
+        <div className="flex items-center gap-4 ml-4">
+          {onFiltersToggle && (
+            <Button
+              onClick={onFiltersToggle}
+              className="rounded-lg bg-black text-white hover:bg-zinc-800 h-[52px] px-4"
+              aria-label={hasActiveFilters ? 'Filters active' : 'Toggle filters'}
+            >
+              <Filter className="mr-2 h-4 w-4" />
+              Filters
+            </Button>
+          )}
+          {showExport && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="rounded-lg h-[52px] px-4" aria-label="Export documents">
+                  <Download className="mr-2 h-4 w-4" />
+                  Export as
                 </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{hasActiveFilters ? "Filters are active" : "Open filters"}</p>
-              </TooltipContent>
-            </Tooltip>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => onExport?.('csv')}>CSV</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onExport?.('json')}>JSON</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
 
-            {/* Dark mode toggle */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onDarkModeToggle(!isDarkMode)}
-                  aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+          {showTimePreset && (
+            <div className="flex items-center bg-white border border-[#D3D3D3] rounded-lg px-2 py-2 shadow-sm h-[52px]">
+              {(
+                [
+                  { key: 'last24h', label: 'Last 24h' },
+                  { key: '7d', label: '7 Days' },
+                  { key: '30d', label: '30 Days' },
+                  { key: '90d', label: '90 Days' },
+                ] as const
+              ).map((opt) => (
+                <button
+                  key={opt.key}
+                  onClick={() => onTimePresetChange?.(opt.key)}
+                  className={
+                    `mx-0.5 h-[36px] px-3 rounded-lg text-sm font-medium transition-colors ` +
+                    (timePreset === opt.key
+                      ? 'bg-yellow-400 text-black'
+                      : 'text-gray-800 hover:bg-gray-100')
+                  }
+                  aria-pressed={timePreset === opt.key}
                 >
-                  {isDarkMode ? (
-                    <Sun className="h-4 w-4" aria-hidden="true" />
-                  ) : (
-                    <Moon className="h-4 w-4" aria-hidden="true" />
-                  )}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{isDarkMode ? "Switch to light mode" : "Switch to dark mode"}</p>
-              </TooltipContent>
-            </Tooltip>
-
-
-          </div>
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
-      </header>
+      </div>
     </TooltipProvider>
   )
 }

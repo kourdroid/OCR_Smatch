@@ -1,6 +1,8 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# dependencies
+# =========================
+# Dependencies
+# =========================
 /node_modules
 /.pnp
 .pnp.*
@@ -10,32 +12,77 @@
 !.yarn/releases
 !.yarn/versions
 
-# testing
-/coverage
-
-# next.js
+# =========================
+# Build & Output
+# =========================
 /.next/
 /out/
-
-# production
 /build
+/dist
 
-# misc
+# =========================
+# Testing
+# =========================
+/coverage
+
+# =========================
+# Environment Variables
+# =========================
+.env
+.env.*
+!.env.example
+
+# =========================
+# IDE & Editor
+# =========================
+.idea/
+.vscode/
+*.swp
+*.swo
+.trae/
+.figma/
+
+# =========================
+# OS Generated
+# =========================
 .DS_Store
+Thumbs.db
 *.pem
 
-# debug
+# =========================
+# Debug Logs
+# =========================
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
-
-# vercel
+# =========================
+# Vercel
+# =========================
 .vercel
 
-# typescript
+# =========================
+# TypeScript
+# =========================
 *.tsbuildinfo
 next-env.d.ts
+
+# =========================
+# Archives & Backups
+# =========================
+*.zip
+*.tar.gz
+*.rar
+
+# =========================
+# Temporary & Debug SQL
+# =========================
+*.sql
+!supabase/migrations/*.sql
+SQLSchema/
+
+# =========================
+# Test Scripts (temp)
+# =========================
+test_*.js

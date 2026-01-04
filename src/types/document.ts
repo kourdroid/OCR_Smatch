@@ -29,7 +29,7 @@ export interface DatabaseRow {
 
 export interface Document {
   id: string
-  status: 'extracted' | 'needs review' | 'failed'
+  status: 'extracted' | 'needs review' | 'failed' | 'processing'
   type: 'invoice' | 'BL' | 'BC' | 'CO' | 'OTHER'
   documentNumber: string
   amount: number
@@ -46,6 +46,10 @@ export interface Document {
   auditTimeline: AuditEvent[]
   downloadUrl?: string
   downloadExpiry?: Date
+  organization?: {
+    id: string
+    name: string
+  }
 }
 
 export interface AuditEvent {
@@ -59,6 +63,10 @@ export interface KPIData {
   documentsToday: number
   extractionRate: number
   avgProcessingTime: number
+  // New KPIs to match Figma design
+  valueProcessed?: number
+  documentsProcessed?: number
+  mismatchedDocuments?: number
 }
 
 export interface FilterState {
@@ -74,6 +82,12 @@ export interface FilterState {
     min?: number
     max?: number
   }
+  // Extended filters for dashboard design
+  supplier?: string
+  documentId?: string
+  shipper?: string
+  fileType?: string
+  channelQuery?: string
 }
 
 export interface SavedView {

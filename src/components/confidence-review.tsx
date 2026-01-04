@@ -28,7 +28,7 @@ function FieldWithConfidence({ label, value, fieldName, type = "text", onChange,
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{label}</label>
+        <label className="text-sm font-medium text-gray-700">{label}</label>
         <span className={cn("text-xs font-medium", confidenceColor)}>
           {Math.round(fieldConfidence * 100)}%
         </span>
@@ -39,25 +39,25 @@ function FieldWithConfidence({ label, value, fieldName, type = "text", onChange,
             type="number"
             value={value}
             onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         ) : type === "textarea" ? (
           <textarea
             value={typeof value === 'object' && value !== null ? JSON.stringify(value, null, 2) : (value || '')}
             onChange={(e) => onChange(e.target.value)}
             rows={3}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         ) : (
           <input
             type="text"
             value={typeof value === 'object' && value !== null ? JSON.stringify(value, null, 2) : (value || '')}
             onChange={(e) => onChange(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         )
       ) : (
-        <div className="p-2 rounded border bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white">
+        <div className="p-2 rounded border bg-gray-50 text-gray-900">
           {type === "number" ? (value || 0) : 
            typeof value === 'object' && value !== null ? JSON.stringify(value, null, 2) : 
            (value || '—')}
@@ -118,15 +118,15 @@ export function ConfidenceReview({ document, onSave, onCancel }: ConfidenceRevie
         <div className="flex items-center space-x-3">
           <AlertTriangle className={cn("h-5 w-5", confidenceColor)} />
           <div>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Confidence Review</h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <h2 className="text-lg font-semibold text-gray-900">Confidence Review</h2>
+            <p className="text-sm text-gray-600">
               Document requires manual review due to low confidence score
             </p>
           </div>
         </div>
         <span className={cn(
           "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
-          confidenceLevel === 'low' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
+          confidenceLevel === 'low' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'
         )}>
           {Math.round(document.confidence * 100)}% Overall Confidence
         </span>
@@ -145,7 +145,7 @@ export function ConfidenceReview({ document, onSave, onCancel }: ConfidenceRevie
             </button>
             <button 
               onClick={() => setShowRawData(!showRawData)}
-              className="flex items-center space-x-2 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              className="flex items-center space-x-2 px-4 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
             >
               {showRawData ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               <span>{showRawData ? 'Hide' : 'Show'} Raw Data</span>
@@ -162,7 +162,7 @@ export function ConfidenceReview({ document, onSave, onCancel }: ConfidenceRevie
             </button>
             <button 
               onClick={() => setIsEditing(false)}
-              className="flex items-center space-x-2 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              className="flex items-center space-x-2 px-4 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
             >
               <X className="h-4 w-4" />
               <span>Cancel</span>
@@ -171,7 +171,7 @@ export function ConfidenceReview({ document, onSave, onCancel }: ConfidenceRevie
         )}
         <button 
           onClick={onCancel}
-          className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
+          className="px-4 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
         >
           Close Review
         </button>
@@ -179,7 +179,7 @@ export function ConfidenceReview({ document, onSave, onCancel }: ConfidenceRevie
 
       {/* Tabs */}
       <div className="w-full">
-        <div className="border-b border-gray-200 dark:border-gray-700">
+        <div className="border-b border-gray-200">
           <nav className="-mb-px flex space-x-8">
             {[
               { id: 'extracted', label: 'Extracted Data' },
@@ -192,8 +192,8 @@ export function ConfidenceReview({ document, onSave, onCancel }: ConfidenceRevie
                 className={cn(
                   "py-2 px-1 border-b-2 font-medium text-sm transition-colors",
                   activeTab === tab.id
-                    ? "border-blue-500 text-blue-600 dark:text-blue-400"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300"
+                    ? "border-blue-500 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                 )}
               >
                 {tab.label}
@@ -207,8 +207,8 @@ export function ConfidenceReview({ document, onSave, onCancel }: ConfidenceRevie
           {activeTab === 'extracted' && (
             <div className="space-y-6">
               {/* Core Document Fields */}
-              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-                <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Core Document Fields</h3>
+              <div className="bg-white border border-gray-200 rounded-lg p-6">
+                <h3 className="text-base font-semibold text-gray-900 mb-4">Core Document Fields</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FieldWithConfidence
                     label="Document Number"
@@ -243,8 +243,8 @@ export function ConfidenceReview({ document, onSave, onCancel }: ConfidenceRevie
               </div>
 
               {/* Extracted Payload Data */}
-              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-                <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Extracted Payload Data</h3>
+              <div className="bg-white border border-gray-200 rounded-lg p-6">
+                <h3 className="text-base font-semibold text-gray-900 mb-4">Extracted Payload Data</h3>
                 <div className="space-y-4">
                   {Object.entries(editedDocument.payload).map(([key, value]) => (
                     <FieldWithConfidence
@@ -262,9 +262,9 @@ export function ConfidenceReview({ document, onSave, onCancel }: ConfidenceRevie
 
               {/* Raw Data */}
               {showRawData && (
-                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-                  <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Raw JSON Data</h3>
-                  <pre className="bg-gray-100 dark:bg-gray-900 p-4 rounded-lg text-sm overflow-auto max-h-96 text-gray-900 dark:text-gray-100">
+                <div className="bg-white border border-gray-200 rounded-lg p-6">
+                  <h3 className="text-base font-semibold text-gray-900 mb-4">Raw JSON Data</h3>
+                  <pre className="bg-gray-100 p-4 rounded-lg text-sm overflow-auto max-h-96 text-gray-900">
                     {JSON.stringify(editedDocument.payload, null, 2)}
                   </pre>
                 </div>
@@ -273,45 +273,45 @@ export function ConfidenceReview({ document, onSave, onCancel }: ConfidenceRevie
           )}
 
           {activeTab === 'metadata' && (
-            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-              <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Document Metadata</h3>
+            <div className="bg-white border border-gray-200 rounded-lg p-6">
+              <h3 className="text-base font-semibold text-gray-900 mb-4">Document Metadata</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Status</label>
-                  <div className="p-2 rounded border bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white">{document.status}</div>
+                  <label className="text-sm font-medium text-gray-700">Status</label>
+                  <div className="p-2 rounded border bg-gray-50 text-gray-900">{document.status}</div>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Channel</label>
-                  <div className="p-2 rounded border bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white">{document.channel}</div>
+                  <label className="text-sm font-medium text-gray-700">Channel</label>
+                  <div className="p-2 rounded border bg-gray-50 text-gray-900">{document.channel}</div>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">File Type</label>
-                  <div className="p-2 rounded border bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white">{document.fileType}</div>
+                  <label className="text-sm font-medium text-gray-700">File Type</label>
+                  <div className="p-2 rounded border bg-gray-50 text-gray-900">{document.fileType}</div>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Processing Time</label>
-                  <div className="p-2 rounded border bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white">{document.processingTime}ms</div>
+                  <label className="text-sm font-medium text-gray-700">Processing Time</label>
+                  <div className="p-2 rounded border bg-gray-50 text-gray-900">{document.processingTime}ms</div>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Received At</label>
-                  <div className="p-2 rounded border bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white">
+                  <label className="text-sm font-medium text-gray-700">Received At</label>
+                  <div className="p-2 rounded border bg-gray-50 text-gray-900">
                     {document.receivedAt.toLocaleString()}
                   </div>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Sender</label>
-                  <div className="p-2 rounded border bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white">{document.senderEmail}</div>
+                  <label className="text-sm font-medium text-gray-700">Sender</label>
+                  <div className="p-2 rounded border bg-gray-50 text-gray-900">{document.senderEmail}</div>
                 </div>
               </div>
             </div>
           )}
 
           {activeTab === 'audit' && (
-            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-              <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Audit Trail</h3>
+            <div className="bg-white border border-gray-200 rounded-lg p-6">
+              <h3 className="text-base font-semibold text-gray-900 mb-4">Audit Trail</h3>
               <div className="space-y-4">
                 {editedDocument.auditTimeline.map((event, index) => (
-                  <div key={index} className="flex items-start space-x-3 pb-4 border-b border-gray-200 dark:border-gray-700 last:border-b-0">
+                  <div key={index} className="flex items-start space-x-3 pb-4 border-b border-gray-200 last:border-b-0">
                     <div className="flex-shrink-0">
                       {event.event === 'extracted' || event.event === 'reviewed' ? (
                         <CheckCircle className="h-5 w-5 text-green-500" />
@@ -321,16 +321,16 @@ export function ConfidenceReview({ document, onSave, onCancel }: ConfidenceRevie
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
-                        <p className="text-sm font-medium text-gray-900 dark:text-white capitalize">{event.event}</p>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                        <p className="text-sm font-medium text-gray-900 capitalize">{event.event}</p>
+                        <span className="text-xs text-gray-500">
                           {event.timestamp.toLocaleString()}
                         </span>
                       </div>
                       {event.details && (
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{event.details}</p>
+                        <p className="text-sm text-gray-600 mt-1">{event.details}</p>
                       )}
                       {event.confidence && (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200 mt-2">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 mt-2">
                           {Math.round(event.confidence * 100)}% confidence
                         </span>
                       )}
