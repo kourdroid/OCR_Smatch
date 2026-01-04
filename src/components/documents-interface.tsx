@@ -239,7 +239,7 @@ export function DocumentsInterface({ initialDocuments }: { initialDocuments: Doc
     }
   }, [filters.search])
 
-  const filteredDocuments = (documents || []).filter(doc => {
+  const filteredDocuments = useMemo(() => (documents || []).filter(doc => {
     // Search filter
     if (filters.search) {
       const searchTerm = filters.search.toLowerCase()
@@ -271,10 +271,11 @@ export function DocumentsInterface({ initialDocuments }: { initialDocuments: Doc
     if (filters.amountRange.max && doc.amount > filters.amountRange.max) return false
 
     return true
-  })
+  }), [documents, filters])
 
   // Group documents by supplier and type
-  const groupDocuments = (docs: Document[]): DocumentRow[] => {
+  const documentRows = useMemo(() => {
+    const docs = filteredDocuments
     const groups: { [key: string]: Document[] } = {}
     const singles: Document[] = []
 
@@ -287,7 +288,7 @@ export function DocumentsInterface({ initialDocuments }: { initialDocuments: Doc
       groups[groupKey].push(doc)
     })
 
-    const documentRows: DocumentRow[] = []
+    const resultRows: DocumentRow[] = []
 
     // Process groups
     Object.entries(groups).forEach(([groupKey, groupDocs]) => {
@@ -320,7 +321,7 @@ export function DocumentsInterface({ initialDocuments }: { initialDocuments: Doc
           }
         }
 
-        documentRows.push({
+        resultRows.push({
           type: 'group',
           group
         })
@@ -332,16 +333,14 @@ export function DocumentsInterface({ initialDocuments }: { initialDocuments: Doc
 
     // Add single documents
     singles.forEach(doc => {
-      documentRows.push({
+      resultRows.push({
         type: 'single',
         document: doc
       })
     })
 
-    return documentRows
-  }
-
-  const documentRows = groupDocuments(filteredDocuments)
+    return resultRows
+  }, [filteredDocuments])
 
   // Confidence review handlers
   const handleConfidenceReview = (document: Document) => {

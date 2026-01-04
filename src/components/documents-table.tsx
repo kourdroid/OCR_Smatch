@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { 
   FileText, 
   Receipt, 
@@ -120,33 +120,42 @@ export function DocumentsTable({ documentRows, onDocumentSelect, selectedDocumen
   }
 
   // Sort document rows (groups by their aggregate data, singles by their document data)
-  const sortedRows = [...documentRows].sort((a, b) => {
-    let aValue, bValue
-    
-    if (a.type === 'group' && a.group) {
-      aValue = a.group.aggregateData.latestReceivedAt
-    } else if (a.document) {
-      aValue = a.document[sortField]
-    }
-    
-    if (b.type === 'group' && b.group) {
-      bValue = b.group.aggregateData.latestReceivedAt
-    } else if (b.document) {
-      bValue = b.document[sortField]
-    }
-    
-    if (aValue == null && bValue == null) return 0
-    if (aValue == null) return sortDirection === 'asc' ? 1 : -1
-    if (bValue == null) return sortDirection === 'asc' ? -1 : 1
-    if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1
-    if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1
-    return 0
-  })
+  const sortedRows = useMemo(() => {
+    return [...documentRows].sort((a, b) => {
+      let aValue, bValue
+
+      if (a.type === 'group' && a.group) {
+        aValue = a.group.aggregateData.latestReceivedAt
+      } else if (a.document) {
+        aValue = a.document[sortField]
+      }
+
+      if (b.type === 'group' && b.group) {
+        bValue = b.group.aggregateData.latestReceivedAt
+      } else if (b.document) {
+        bValue = b.document[sortField]
+      }
+
+      if (aValue == null && bValue == null) return 0
+      if (aValue == null) return sortDirection === 'asc' ? 1 : -1
+      if (bValue == null) return sortDirection === 'asc' ? -1 : 1
+      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1
+      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1
+      return 0
+    })
+  }, [documentRows, sortField, sortDirection])
 
   const totalPages = Math.ceil(sortedRows.length / itemsPerPage)
-  const startIndex = (currentPage - 1) * itemsPerPage
-  const endIndex = Math.min(startIndex + itemsPerPage, sortedRows.length)
-  const paginatedRows = sortedRows.slice(startIndex, endIndex)
+
+  const { paginatedRows, startIndex, endIndex } = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage
+    const end = Math.min(start + itemsPerPage, sortedRows.length)
+    return {
+      paginatedRows: sortedRows.slice(start, end),
+      startIndex: start,
+      endIndex: end
+    }
+  }, [sortedRows, currentPage, itemsPerPage])
 
   const renderGroupRow = (group: DocumentGroup) => {
     const isSelected = group.documents.some(doc => selectedDocument?.id === doc.id)

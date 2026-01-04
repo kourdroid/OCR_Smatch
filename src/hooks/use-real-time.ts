@@ -139,7 +139,13 @@ export function useRealTime({ documents, kpiData, onDocumentsUpdate, onKPIUpdate
       const mostRecentDoc = documents.reduce((latest, current) => {
         return current.receivedAt > latest.receivedAt ? current : latest
       })
-      setLastUpdate(mostRecentDoc.receivedAt)
+      // Only update if the new timestamp is different to avoid loops/unnecessary renders
+      setLastUpdate(prev => {
+        if (!prev || prev.getTime() !== mostRecentDoc.receivedAt.getTime()) {
+           return mostRecentDoc.receivedAt
+        }
+        return prev
+      })
     }
   }, [documents])
 
