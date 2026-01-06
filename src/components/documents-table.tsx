@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import {
   FileText,
   Receipt,
@@ -142,28 +142,31 @@ export function DocumentsTable({
   }
 
   // Sort document rows (groups by their aggregate data, singles by their document data)
-  const sortedRows = [...documentRows].sort((a, b) => {
-    let aValue, bValue
+  // Memoized to prevent re-sorting on every render (e.g. when toggling groups)
+  const sortedRows = useMemo(() => {
+    return [...documentRows].sort((a, b) => {
+      let aValue, bValue
 
-    if (a.type === 'group' && a.group) {
-      aValue = a.group.aggregateData.latestReceivedAt
-    } else if (a.document) {
-      aValue = a.document[sortField]
-    }
+      if (a.type === 'group' && a.group) {
+        aValue = a.group.aggregateData.latestReceivedAt
+      } else if (a.document) {
+        aValue = a.document[sortField]
+      }
 
-    if (b.type === 'group' && b.group) {
-      bValue = b.group.aggregateData.latestReceivedAt
-    } else if (b.document) {
-      bValue = b.document[sortField]
-    }
+      if (b.type === 'group' && b.group) {
+        bValue = b.group.aggregateData.latestReceivedAt
+      } else if (b.document) {
+        bValue = b.document[sortField]
+      }
 
-    if (aValue == null && bValue == null) return 0
-    if (aValue == null) return sortDirection === 'asc' ? 1 : -1
-    if (bValue == null) return sortDirection === 'asc' ? -1 : 1
-    if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1
-    if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1
-    return 0
-  })
+      if (aValue == null && bValue == null) return 0
+      if (aValue == null) return sortDirection === 'asc' ? 1 : -1
+      if (bValue == null) return sortDirection === 'asc' ? -1 : 1
+      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1
+      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1
+      return 0
+    })
+  }, [documentRows, sortField, sortDirection])
 
   // Use props for pagination if available, otherwise fallback (though we expect server-side mostly now)
   // If server-side, documentRows is already the current page.
