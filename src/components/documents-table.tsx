@@ -188,17 +188,30 @@ export function DocumentsTable({
           <div className="flex items-center gap-2">
             <Package className="h-4 w-4 text-muted-foreground" />
             <span className="font-medium">{group.groupKey}</span>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-4 w-4 p-0"
-              onClick={(e) => {
-                e.stopPropagation()
-                toggleGroupExpansion(group.id)
-              }}
-            >
-              {isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-4 w-4 p-0"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    toggleGroupExpansion(group.id)
+                  }}
+                  aria-label={isExpanded ? 'Collapse group' : 'Expand group'}
+                  aria-expanded={isExpanded}
+                >
+                  {isExpanded ? (
+                    <ChevronDown className="h-3 w-3" />
+                  ) : (
+                    <ChevronRight className="h-3 w-3" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {isExpanded ? 'Collapse group' : 'Expand group'}
+              </TooltipContent>
+            </Tooltip>
           </div>
         </TableCell>
 
