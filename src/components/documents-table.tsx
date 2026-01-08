@@ -1,18 +1,10 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import {
-  FileText,
-  Receipt,
-  Ship,
-  Award,
-  File,
   Mail,
   MessageSquare,
   Send,
-  FileSpreadsheet,
-  Image,
-  Download,
   ChevronUp,
   ChevronDown,
   ChevronRight,
@@ -82,32 +74,226 @@ interface DocumentsTableProps {
   onOrganizationClick?: (orgId: string) => void
 }
 
-const typeIcons = {
-  invoice: Receipt,
-  BL: Ship,
-  BC: Award,
-  CO: Award,
-  OTHER: File
-}
-
 const channelIcons = {
   gmail: Mail,
   whatsapp: MessageSquare,
   telegram: Send
 }
 
-const fileTypeIcons = {
-  pdf: FileText,
-  xlsx: FileSpreadsheet,
-  png: Image,
-  jpg: Image
-}
+const GroupRowItem = React.memo(({
+  group,
+  isSelected,
+  isExpanded,
+  onToggle
+}: {
+  group: DocumentGroup
+  isSelected: boolean
+  isExpanded: boolean
+  onToggle: (groupId: string) => void
+}) => {
+  const firstDoc = group.documents[0]
+  const shipper = (firstDoc?.payload?.shipper || firstDoc?.payload?.carrier || firstDoc?.payload?.Shipper) as
+    | string
+    | undefined
+
+  return (
+    <TableRow
+      key={group.id}
+      onClick={() => onToggle(group.id)}
+      className={cn('cursor-pointer transition-colors', isSelected && 'bg-muted/50')}
+    >
+      {/* ID */}
+      <TableCell>
+        <div className="flex items-center gap-2">
+          <Package className="h-4 w-4 text-muted-foreground" />
+          <span className="font-medium">{group.groupKey}</span>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-4 w-4 p-0"
+            onClick={(e) => {
+              e.stopPropagation()
+              onToggle(group.id)
+            }}
+          >
+            {isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+          </Button>
+        </div>
+      </TableCell>
+
+      {/* Document Type */}
+      <TableCell>
+        <Badge variant="outline" className="text-xs">
+          GROUP
+        </Badge>
+      </TableCell>
+
+      {/* Amount */}
+      <TableCell>
+        <div className="font-medium">
+          {group.aggregateData.totalAmount > 0
+            ? formatCurrency(group.aggregateData.totalAmount, group.aggregateData.currency)
+            : '—'}
+        </div>
+      </TableCell>
+
+      {/* Supplier */}
+      <TableCell>
+        <div className="max-w-[200px] truncate font-medium">{firstDoc?.supplier || '—'}</div>
+      </TableCell>
+
+      {/* Shipper */}
+      <TableCell>
+        <div className="max-w-[160px] truncate text-sm">{shipper || '—'}</div>
+      </TableCell>
+
+      {/* File */}
+      <TableCell>
+        <Badge variant="outline" className="text-xs">
+          MULTI
+        </Badge>
+      </TableCell>
+
+      {/* Action */}
+      <TableCell>
+        <span className="text-muted-foreground">—</span>
+      </TableCell>
+
+      {/* Channel */}
+      <TableCell>
+        <div className="text-sm">Multiple</div>
+      </TableCell>
+
+      {/* Time */}
+      <TableCell>
+        <div className="text-sm text-muted-foreground">{formatRelativeTime(group.aggregateData.latestReceivedAt)}</div>
+      </TableCell>
+    </TableRow>
+  )
+})
+GroupRowItem.displayName = 'GroupRowItem'
+
+const DocumentRowItem = React.memo(({
+  document,
+  isSubRow = false,
+  isSelected,
+  onSelect
+}: {
+  document: Document
+  isSubRow?: boolean
+  isSelected: boolean
+  onSelect: (document: Document) => void
+}) => {
+  const ChannelIcon = channelIcons[document.channel as keyof typeof channelIcons] || Mail
+
+  const typeDisplay: Record<string, string> = {
+    invoice: 'Facture',
+    BL: 'BL',
+    BC: 'BC',
+    CO: 'CO',
+    OTHER: 'Other',
+  }
+  const shipper = (document.payload?.shipper || document.payload?.carrier || document.payload?.Shipper) as
+    | string
+    | undefined
+
+  return (
+    <TableRow
+      key={document.id}
+      onClick={() => onSelect(document)}
+      className={cn('cursor-pointer transition-colors border-b border-[#EDEDED]', isSelected && 'bg-muted/50', isSubRow && 'bg-muted/20')}
+      aria-selected={isSelected}
+    >
+      {/* ID */}
+      <TableCell className="pl-[26px] text-black">
+        <div className="font-medium">{document.documentNumber || document.id}</div>
+      </TableCell>
+
+      {/* Document Type */}
+      <TableCell className="text-black">
+        <div className="font-medium">{typeDisplay[document.type] || document.type}</div>
+      </TableCell>
+
+      {/* Amount */}
+      <TableCell className="text-black">
+        <div className="font-medium">
+          {document.amount > 0 ? formatCurrency(document.amount, document.currency) : '—'}
+        </div>
+      </TableCell>
+
+      {/* Supplier */}
+      <TableCell className="text-black">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="max-w-[200px] truncate font-medium">{document.supplier}</div>
+          </TooltipTrigger>
+          <TooltipContent>{document.supplier}</TooltipContent>
+        </Tooltip>
+      </TableCell>
+
+      {/* Shipper */}
+      <TableCell className="text-black">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="max-w-[160px] truncate text-sm">{shipper || '—'}</div>
+          </TooltipTrigger>
+          <TooltipContent>{shipper || '—'}</TooltipContent>
+        </Tooltip>
+      </TableCell>
+
+      {/* File */}
+      <TableCell className="text-black">
+        <Badge variant="outline" className="text-xs uppercase">
+          {document.fileType}
+        </Badge>
+      </TableCell>
+
+      {/* Action */}
+      <TableCell className="pr-[78px]">
+        {document.status === 'processing' ? (
+          <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200 animate-pulse">
+            Processing...
+          </Badge>
+        ) : document.status === 'failed' ? (
+          <Badge variant="destructive">Failed</Badge>
+        ) : (
+          <Button
+            className="rounded-full bg-black text-white hover:bg-zinc-800"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation()
+              if (document.downloadUrl) {
+                window.open(document.downloadUrl, '_blank')
+              }
+            }}
+            disabled={!document.downloadUrl}
+          >
+            Download
+          </Button>
+        )}
+      </TableCell>
+
+      {/* Channel */}
+      <TableCell>
+        <div className="flex items-center gap-2">
+          <ChannelIcon className="h-4 w-4 text-muted-foreground" />
+          <span className="capitalize">{document.channel}</span>
+        </div>
+      </TableCell>
+
+      {/* Time */}
+      <TableCell>
+        <div className="text-sm text-muted-foreground">{formatRelativeTime(document.receivedAt)}</div>
+      </TableCell>
+    </TableRow>
+  )
+})
+DocumentRowItem.displayName = 'DocumentRowItem'
 
 export function DocumentsTable({
   documentRows,
   onDocumentSelect,
   selectedDocument,
-  onConfidenceReview,
   onGroupToggle,
   itemsPerPage: itemsPerPageProp,
   isLoading,
@@ -142,225 +328,35 @@ export function DocumentsTable({
   }
 
   // Sort document rows (groups by their aggregate data, singles by their document data)
-  const sortedRows = [...documentRows].sort((a, b) => {
-    let aValue, bValue
+  // Memoized to prevent re-sorting on every render
+  const sortedRows = useMemo(() => {
+    return [...documentRows].sort((a, b) => {
+      let aValue, bValue
 
-    if (a.type === 'group' && a.group) {
-      aValue = a.group.aggregateData.latestReceivedAt
-    } else if (a.document) {
-      aValue = a.document[sortField]
-    }
+      if (a.type === 'group' && a.group) {
+        aValue = a.group.aggregateData.latestReceivedAt
+      } else if (a.document) {
+        aValue = a.document[sortField]
+      }
 
-    if (b.type === 'group' && b.group) {
-      bValue = b.group.aggregateData.latestReceivedAt
-    } else if (b.document) {
-      bValue = b.document[sortField]
-    }
+      if (b.type === 'group' && b.group) {
+        bValue = b.group.aggregateData.latestReceivedAt
+      } else if (b.document) {
+        bValue = b.document[sortField]
+      }
 
-    if (aValue == null && bValue == null) return 0
-    if (aValue == null) return sortDirection === 'asc' ? 1 : -1
-    if (bValue == null) return sortDirection === 'asc' ? -1 : 1
-    if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1
-    if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1
-    return 0
-  })
+      if (aValue == null && bValue == null) return 0
+      if (aValue == null) return sortDirection === 'asc' ? 1 : -1
+      if (bValue == null) return sortDirection === 'asc' ? -1 : 1
+      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1
+      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1
+      return 0
+    })
+  }, [documentRows, sortField, sortDirection])
 
   // Use props for pagination if available, otherwise fallback (though we expect server-side mostly now)
   // If server-side, documentRows is already the current page.
   const paginatedRows = sortedRows
-
-  const renderGroupRow = (group: DocumentGroup) => {
-    const isSelected = group.documents.some((doc) => selectedDocument?.id === doc.id)
-    const isExpanded = expandedGroups.has(group.id)
-    const firstDoc = group.documents[0]
-    const shipper = (firstDoc?.payload?.shipper || firstDoc?.payload?.carrier || firstDoc?.payload?.Shipper) as
-      | string
-      | undefined
-
-    return (
-      <TableRow
-        key={group.id}
-        onClick={() => toggleGroupExpansion(group.id)}
-        className={cn('cursor-pointer transition-colors', isSelected && 'bg-muted/50')}
-      >
-        {/* ID */}
-        <TableCell>
-          <div className="flex items-center gap-2">
-            <Package className="h-4 w-4 text-muted-foreground" />
-            <span className="font-medium">{group.groupKey}</span>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-4 w-4 p-0"
-              onClick={(e) => {
-                e.stopPropagation()
-                toggleGroupExpansion(group.id)
-              }}
-            >
-              {isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
-            </Button>
-          </div>
-        </TableCell>
-
-        {/* Document Type */}
-        <TableCell>
-          <Badge variant="outline" className="text-xs">
-            GROUP
-          </Badge>
-        </TableCell>
-
-        {/* Amount */}
-        <TableCell>
-          <div className="font-medium">
-            {group.aggregateData.totalAmount > 0
-              ? formatCurrency(group.aggregateData.totalAmount, group.aggregateData.currency)
-              : '—'}
-          </div>
-        </TableCell>
-
-        {/* Supplier */}
-        <TableCell>
-          <div className="max-w-[200px] truncate font-medium">{firstDoc?.supplier || '—'}</div>
-        </TableCell>
-
-        {/* Shipper */}
-        <TableCell>
-          <div className="max-w-[160px] truncate text-sm">{shipper || '—'}</div>
-        </TableCell>
-
-        {/* File */}
-        <TableCell>
-          <Badge variant="outline" className="text-xs">
-            MULTI
-          </Badge>
-        </TableCell>
-
-        {/* Action */}
-        <TableCell>
-          <span className="text-muted-foreground">—</span>
-        </TableCell>
-
-        {/* Channel */}
-        <TableCell>
-          <div className="text-sm">Multiple</div>
-        </TableCell>
-
-        {/* Time */}
-        <TableCell>
-          <div className="text-sm text-muted-foreground">{formatRelativeTime(group.aggregateData.latestReceivedAt)}</div>
-        </TableCell>
-      </TableRow>
-    )
-  }
-
-  const renderDocumentRow = (document: Document, isSubRow = false) => {
-    const ChannelIcon = channelIcons[document.channel as keyof typeof channelIcons] || Mail
-    const FileIcon = fileTypeIcons[document.fileType as keyof typeof fileTypeIcons] || File
-    const isSelected = selectedDocument?.id === document.id
-    const typeDisplay: Record<string, string> = {
-      invoice: 'Facture',
-      BL: 'BL',
-      BC: 'BC',
-      CO: 'CO',
-      OTHER: 'Other',
-    }
-    const shipper = (document.payload?.shipper || document.payload?.carrier || document.payload?.Shipper) as
-      | string
-      | undefined
-
-    return (
-      <TableRow
-        key={document.id}
-        onClick={() => onDocumentSelect(document)}
-        className={cn('cursor-pointer transition-colors border-b border-[#EDEDED]', isSelected && 'bg-muted/50', isSubRow && 'bg-muted/20')}
-        aria-selected={isSelected}
-      >
-        {/* ID */}
-        <TableCell className="pl-[26px] text-black">
-          <div className="font-medium">{document.documentNumber || document.id}</div>
-        </TableCell>
-
-        {/* Document Type */}
-        <TableCell className="text-black">
-          <div className="font-medium">{typeDisplay[document.type] || document.type}</div>
-        </TableCell>
-
-        {/* Amount */}
-        <TableCell className="text-black">
-          <div className="font-medium">
-            {document.amount > 0 ? formatCurrency(document.amount, document.currency) : '—'}
-          </div>
-        </TableCell>
-
-        {/* Supplier */}
-        <TableCell className="text-black">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="max-w-[200px] truncate font-medium">{document.supplier}</div>
-            </TooltipTrigger>
-            <TooltipContent>{document.supplier}</TooltipContent>
-          </Tooltip>
-        </TableCell>
-
-        {/* Shipper */}
-        <TableCell className="text-black">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="max-w-[160px] truncate text-sm">{shipper || '—'}</div>
-            </TooltipTrigger>
-            <TooltipContent>{shipper || '—'}</TooltipContent>
-          </Tooltip>
-        </TableCell>
-
-        {/* File */}
-        <TableCell className="text-black">
-          <Badge variant="outline" className="text-xs uppercase">
-            {document.fileType}
-          </Badge>
-        </TableCell>
-
-        {/* Action */}
-        <TableCell className="pr-[78px]">
-          {document.status === 'processing' ? (
-            <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200 animate-pulse">
-              Processing...
-            </Badge>
-          ) : document.status === 'failed' ? (
-            <Badge variant="destructive">Failed</Badge>
-          ) : (
-            <Button
-              className="rounded-full bg-black text-white hover:bg-zinc-800"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation()
-                if (document.downloadUrl) {
-                  window.open(document.downloadUrl, '_blank')
-                }
-              }}
-              disabled={!document.downloadUrl}
-            >
-              Download
-            </Button>
-          )}
-        </TableCell>
-
-        {/* Channel */}
-        <TableCell>
-          <div className="flex items-center gap-2">
-            <ChannelIcon className="h-4 w-4 text-muted-foreground" />
-            <span className="capitalize">{document.channel}</span>
-          </div>
-        </TableCell>
-
-        {/* Time */}
-        <TableCell>
-          <div className="text-sm text-muted-foreground">{formatRelativeTime(document.receivedAt)}</div>
-        </TableCell>
-      </TableRow>
-    )
-  }
-
-
 
   return (
     <TooltipProvider>
@@ -424,18 +420,36 @@ export function DocumentsTable({
                 {paginatedRows.map((row) => {
                   if (row.type === 'group' && row.group) {
                     const isExpanded = expandedGroups.has(row.group.id)
+                    const isSelected = row.group.documents.some((doc) => selectedDocument?.id === doc.id)
                     return (
                       <React.Fragment key={row.group.id}>
-                        {renderGroupRow(row.group)}
+                        <GroupRowItem
+                          group={row.group}
+                          isSelected={isSelected}
+                          isExpanded={isExpanded}
+                          onToggle={toggleGroupExpansion}
+                        />
                         {isExpanded && row.group?.documents.map((doc: Document) => (
                           <React.Fragment key={doc.id}>
-                            {renderDocumentRow(doc, true)}
+                            <DocumentRowItem
+                              document={doc}
+                              isSubRow={true}
+                              isSelected={selectedDocument?.id === doc.id}
+                              onSelect={onDocumentSelect}
+                            />
                           </React.Fragment>
                         ))}
                       </React.Fragment>
                     )
                   } else if (row.document) {
-                    return renderDocumentRow(row.document)
+                    return (
+                      <DocumentRowItem
+                        key={row.document.id}
+                        document={row.document}
+                        isSelected={selectedDocument?.id === row.document.id}
+                        onSelect={onDocumentSelect}
+                      />
+                    )
                   }
                   return null
                 })}
