@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import {
   FileText,
   Receipt,
@@ -142,7 +142,8 @@ export function DocumentsTable({
   }
 
   // Sort document rows (groups by their aggregate data, singles by their document data)
-  const sortedRows = [...documentRows].sort((a, b) => {
+  // Optimization: Memoize sorted rows to avoid expensive sorting (O(N log N)) on every render
+  const sortedRows = useMemo(() => [...documentRows].sort((a, b) => {
     let aValue, bValue
 
     if (a.type === 'group' && a.group) {
@@ -163,7 +164,7 @@ export function DocumentsTable({
     if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1
     if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1
     return 0
-  })
+  }), [documentRows, sortField, sortDirection])
 
   // Use props for pagination if available, otherwise fallback (though we expect server-side mostly now)
   // If server-side, documentRows is already the current page.
