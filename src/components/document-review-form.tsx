@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -10,6 +11,7 @@ import { Document } from '@/types/document'
 import { documentSchemaService } from '@/lib/document-schema'
 
 export default function DocumentReviewForm({ document }: { document: Document }) {
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [form, setForm] = useState({
     documentNumber: document.documentNumber || '',
     amount: document.amount || 0,
@@ -49,6 +51,7 @@ export default function DocumentReviewForm({ document }: { document: Document })
       toast.error('Webhook not configured')
       return
     }
+    setIsSubmitting(true)
     try {
       const res = await fetch(url, {
         method: 'POST',
@@ -63,6 +66,8 @@ export default function DocumentReviewForm({ document }: { document: Document })
       toast.success('Document updated')
     } catch {
       toast.error('Update failed')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -136,8 +141,9 @@ export default function DocumentReviewForm({ document }: { document: Document })
           <Button
             className="w-full bg-[#FFC30D] text-black hover:bg-[#E6B00C] font-medium rounded-full h-11"
             onClick={onApprove}
+            disabled={isSubmitting}
           >
-            Approve & Save
+            {isSubmitting ? <Loader2 className="animate-spin" /> : 'Approve & Save'}
           </Button>
         </div>
       )}
