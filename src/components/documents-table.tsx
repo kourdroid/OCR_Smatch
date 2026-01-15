@@ -48,23 +48,32 @@ const SortButton = ({
   sortField: keyof Document | null
   sortDirection: 'asc' | 'desc'
   onSort: (field: keyof Document) => void
-}) => (
-  <Button
-    variant="ghost"
-    size="sm"
-    className="h-auto p-0 font-medium text-muted-foreground hover:text-foreground"
-    onClick={() => onSort(field)}
-  >
-    <span className="flex items-center gap-1">
-      {children}
-      {sortField === field && (
-        sortDirection === 'asc' ?
-          <ChevronUp className="h-3 w-3" /> :
-          <ChevronDown className="h-3 w-3" />
-      )}
-    </span>
-  </Button>
-)
+}) => {
+  const isSorted = sortField === field
+  const label = typeof children === 'string'
+    ? `Sort by ${children}${isSorted ? ` ${sortDirection === 'asc' ? 'ascending' : 'descending'}` : ''}`
+    : undefined
+
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      className="h-auto p-0 font-medium text-muted-foreground hover:text-foreground"
+      onClick={() => onSort(field)}
+      aria-label={label}
+      aria-sort={isSorted ? (sortDirection === 'asc' ? 'ascending' : 'descending') : undefined}
+    >
+      <span className="flex items-center gap-1">
+        {children}
+        {isSorted && (
+          sortDirection === 'asc' ?
+            <ChevronUp className="h-3 w-3" /> :
+            <ChevronDown className="h-3 w-3" />
+        )}
+      </span>
+    </Button>
+  )
+}
 
 interface DocumentsTableProps {
   documentRows: DocumentRow[]
@@ -196,6 +205,8 @@ export function DocumentsTable({
                 e.stopPropagation()
                 toggleGroupExpansion(group.id)
               }}
+              aria-label={isExpanded ? "Collapse group" : "Expand group"}
+              aria-expanded={isExpanded}
             >
               {isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
             </Button>
