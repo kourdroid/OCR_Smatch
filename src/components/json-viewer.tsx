@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
 import { useMemo, useState } from 'react'
@@ -47,17 +48,92 @@ function ValueCell({ value }: { value: any }) {
   return <span className="text-xs text-muted-foreground">{summarize(value)}</span>
 }
 
+const isExpandable = (v: any) => ['object', 'array'].includes(typeOf(v))
+
+interface JSONNodeProps {
+  value: any
+  path: NodePath
+  label: string
+  depth?: number
+  expanded: Record<NodePath, boolean>
+  onToggle: (path: NodePath, open: boolean) => void
+  visibleCount: Record<NodePath, number>
+  onShowMore: (path: NodePath, total: number) => void
+}
+
+// JSONNode is defined outside JSONViewer to prevent re-creation on every render,
+// which causes full DOM subtree unmounting/remounting.
+const JSONNode = ({ value, path, label, depth = 0, expanded, onToggle, visibleCount, onShowMore }: JSONNodeProps) => {
+  const t = typeOf(value)
+  const indent = depth * 16
+  const isOpen = !!expanded[path]
+  const showCount = visibleCount[path] ?? 25
+
+  if (!isExpandable(value)) {
+    return (
+      <div className="flex items-center gap-3 py-2" style={{ paddingLeft: indent }}>
+        <KeyBadge label={label} />
+        <TypeBadge value={value} />
+        <ValueCell value={value} />
+      </div>
+    )
+  }
+
+  const entries = t === 'object' ? Object.entries(value) : value.map((v: any, idx: number) => [String(idx), v])
+  const total = entries.length
+
+  return (
+    <Collapsible
+      open={isOpen}
+      onOpenChange={(open) => onToggle(path, open)}
+    >
+      <div className="space-y-2" style={{ paddingLeft: indent }}>
+        <div className="flex items-center gap-3">
+          <CollapsibleTrigger asChild>
+            <Button variant="outline" size="sm">
+              {isOpen ? 'Collapse' : 'Expand'}
+            </Button>
+          </CollapsibleTrigger>
+          <KeyBadge label={label} />
+          <TypeBadge value={value} />
+          <span className="text-xs text-muted-foreground">{summarize(value)}</span>
+        </div>
+        <CollapsibleContent>
+          <div className="mt-2 border-l pl-3 space-y-1">
+            {entries.slice(0, showCount).map(([k, v]: [string, any]) => (
+              <JSONNode
+                key={k}
+                value={v}
+                path={`${path}.${k}`}
+                label={k}
+                depth={depth + 1}
+                expanded={expanded}
+                onToggle={onToggle}
+                visibleCount={visibleCount}
+                onShowMore={onShowMore}
+              />
+            ))}
+            {total > showCount && (
+              <div className="pt-2">
+                <Button size="sm" variant="ghost" onClick={() => onShowMore(path, total)}>Show more</Button>
+              </div>
+            )}
+          </div>
+        </CollapsibleContent>
+      </div>
+    </Collapsible>
+  )
+}
+
 export function JSONViewer({ data }: { data: any }) {
   const [expanded, setExpanded] = useState<Record<NodePath, boolean>>({})
   const [visibleCount, setVisibleCount] = useState<Record<NodePath, number>>({})
   const [query, setQuery] = useState('')
   const [selectedPath, setSelectedPath] = useState<NodePath>('')
 
-  const isExpandable = (v: any) => ['object', 'array'].includes(typeOf(v))
-
-  const toggle = (path: NodePath) => {
-    setExpanded(prev => ({ ...prev, [path]: !prev[path] }))
-    setSelectedPath(path)
+  const toggle = (path: NodePath, open: boolean) => {
+    setExpanded(prev => ({ ...prev, [path]: open }))
+    if (open) setSelectedPath(path)
   }
 
   const showMore = (path: NodePath, total: number) => {
@@ -66,14 +142,6 @@ export function JSONViewer({ data }: { data: any }) {
     setVisibleCount(prev => ({ ...prev, [path]: next }))
   }
 
-  const resetVisible = (path: NodePath) => {
-    setVisibleCount(prev => ({ ...prev, [path]: 25 }))
-  }
-
-  const matches = (key: string) => {
-    if (!query) return false
-    return key.toLowerCase().includes(query.toLowerCase())
-  }
 
   const PathBar = useMemo(() => {
     if (!selectedPath) return null
@@ -90,61 +158,6 @@ export function JSONViewer({ data }: { data: any }) {
     )
   }, [selectedPath])
 
-  const Node = ({ value, path, label, depth = 0 }: { value: any; path: NodePath; label: string; depth?: number }) => {
-    const t = typeOf(value)
-    const indent = depth * 16
-    const isOpen = !!expanded[path]
-    const showCount = visibleCount[path] ?? 25
-
-    if (!isExpandable(value)) {
-      return (
-        <div className="flex items-center gap-3 py-2" style={{ paddingLeft: indent }}>
-          <KeyBadge label={label} />
-          <TypeBadge value={value} />
-          <ValueCell value={value} />
-        </div>
-      )
-    }
-
-    const entries = t === 'object' ? Object.entries(value) : value.map((v: any, idx: number) => [String(idx), v])
-    const total = entries.length
-
-    return (
-      <Collapsible
-        open={isOpen}
-        onOpenChange={(open) => {
-          setExpanded(prev => ({ ...prev, [path]: open }))
-          if (open) setSelectedPath(path)
-        }}
-      >
-        <div className="space-y-2" style={{ paddingLeft: indent }}>
-          <div className="flex items-center gap-3">
-            <CollapsibleTrigger asChild>
-              <Button variant="outline" size="sm">
-                {isOpen ? 'Collapse' : 'Expand'}
-              </Button>
-            </CollapsibleTrigger>
-            <KeyBadge label={label} />
-            <TypeBadge value={value} />
-            <span className="text-xs text-muted-foreground">{summarize(value)}</span>
-          </div>
-          <CollapsibleContent>
-            <div className="mt-2 border-l pl-3 space-y-1">
-              {entries.slice(0, showCount).map(([k, v]: [string, any]) => (
-                <Node key={k} value={v} path={`${path}.${k}`} label={k} depth={depth + 1} />
-              ))}
-              {total > showCount && (
-                <div className="pt-2">
-                  <Button size="sm" variant="ghost" onClick={() => showMore(path, total)}>Show more</Button>
-                </div>
-              )}
-            </div>
-          </CollapsibleContent>
-        </div>
-      </Collapsible>
-    )
-  }
-
   const rootPath = 'root'
 
   return (
@@ -155,7 +168,15 @@ export function JSONViewer({ data }: { data: any }) {
           {PathBar}
         </div>
         <div className="space-y-2">
-          <Node value={data} path={rootPath} label={typeOf(data) === 'array' ? 'Array' : 'Object'} />
+          <JSONNode
+            value={data}
+            path={rootPath}
+            label={typeOf(data) === 'array' ? 'Array' : 'Object'}
+            expanded={expanded}
+            onToggle={toggle}
+            visibleCount={visibleCount}
+            onShowMore={showMore}
+          />
         </div>
       </CardContent>
     </Card>
