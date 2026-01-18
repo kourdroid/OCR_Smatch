@@ -1,0 +1,3 @@
+## 2024-05-23 - React Component Performance
+**Learning:** `DocumentsInterface` was performing an O(n) grouping operation twice on every render (once for `documentRowsAll` and once for `documentRowsDashboard`), and subsequently re-sorting `latestThreeRows`. This was a hidden bottleneck triggered by any state change in the component (e.g., changing active tab or selecting a document).
+**Action:** Always look for expensive calculations (like grouping/sorting lists) inside the render body. Extract pure logic functions outside the component and use `useMemo` for the derived data. Consolidate identical calculations into a single memoized value.
