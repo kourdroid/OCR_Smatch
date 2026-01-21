@@ -1,0 +1,3 @@
+## 2024-05-23 - Expensive Derived State in Render Body
+**Learning:** Defining helper functions and calculating expensive derived state (like grouping large arrays) directly in the component body causes unnecessary re-calculations on every render. This cascades to children components even if they use `React.memo` because the derived data reference changes.
+**Action:** Move pure helper functions outside the component scope. Use `useMemo` for expensive derived data (like grouped lists) to ensure referential stability and skip calculations when dependencies (e.g., the source list) haven't changed.
