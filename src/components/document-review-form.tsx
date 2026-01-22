@@ -1,11 +1,12 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useId } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
+import { Loader2 } from 'lucide-react'
 import { Document } from '@/types/document'
 import { documentSchemaService } from '@/lib/document-schema'
 
@@ -18,6 +19,8 @@ export default function DocumentReviewForm({ document }: { document: Document })
     channel: document.channel || '',
     fileType: document.fileType || '',
   })
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const id = useId()
 
   const status = document.status
 
@@ -25,21 +28,21 @@ export default function DocumentReviewForm({ document }: { document: Document })
     try {
       return documentSchemaService.validateDocument(document.payload || {}, document.type)
     } catch {
-      return { missingRequired: [], invalidFields: [] } as any
+      return { isValid: true, missingRequired: [], invalidFields: [], score: 100 }
     }
   }, [document.payload, document.type])
 
   const flagged = useMemo(() => {
     const set = new Set<string>([
-      ...((validation?.missingRequired as string[]) || []),
-      ...((validation?.invalidFields as string[]) || []),
+      ...(validation?.missingRequired || []),
+      ...(validation?.invalidFields || []),
     ])
     return set
   }, [validation])
 
   const disabled = status === 'extracted'
 
-  const update = (key: keyof typeof form, value: any) => {
+  const update = (key: keyof typeof form, value: string | number) => {
     setForm(prev => ({ ...prev, [key]: value }))
   }
 
@@ -49,6 +52,8 @@ export default function DocumentReviewForm({ document }: { document: Document })
       toast.error('Webhook not configured')
       return
     }
+
+    setIsSubmitting(true)
     try {
       const res = await fetch(url, {
         method: 'POST',
@@ -63,6 +68,8 @@ export default function DocumentReviewForm({ document }: { document: Document })
       toast.success('Document updated')
     } catch {
       toast.error('Update failed')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -83,39 +90,39 @@ export default function DocumentReviewForm({ document }: { document: Document })
 
       <div className="space-y-5">
         <div className="space-y-2">
-          <Label className="text-gray-700">Document Number</Label>
+          <Label htmlFor={disabled ? undefined : `${id}-doc-number`} className="text-gray-700">Document Number</Label>
           {disabled ? (
             <p className="h-10 flex items-center rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700">{form.documentNumber || '—'}</p>
           ) : (
-            <Input value={form.documentNumber} onChange={(e) => update('documentNumber', e.target.value)} className={fieldClass('document_number')} />
+            <Input id={`${id}-doc-number`} value={form.documentNumber} onChange={(e) => update('documentNumber', e.target.value)} className={fieldClass('document_number')} />
           )}
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label className="text-gray-700">Amount</Label>
+            <Label htmlFor={disabled ? undefined : `${id}-amount`} className="text-gray-700">Amount</Label>
             {disabled ? (
               <p className="h-10 flex items-center rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700">{form.amount || 0}</p>
             ) : (
-              <Input type="number" step="0.01" value={form.amount} onChange={(e) => update('amount', Number(e.target.value))} className={fieldClass('amount')} />
+              <Input id={`${id}-amount`} type="number" step="0.01" value={form.amount} onChange={(e) => update('amount', Number(e.target.value))} className={fieldClass('amount')} />
             )}
           </div>
           <div className="space-y-2">
-            <Label className="text-gray-700">Currency</Label>
+            <Label htmlFor={disabled ? undefined : `${id}-currency`} className="text-gray-700">Currency</Label>
             {disabled ? (
               <p className="h-10 flex items-center rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700 uppercase">{form.currency || '—'}</p>
             ) : (
-              <Input value={form.currency} onChange={(e) => update('currency', e.target.value)} className={fieldClass('currency')} />
+              <Input id={`${id}-currency`} value={form.currency} onChange={(e) => update('currency', e.target.value)} className={fieldClass('currency')} />
             )}
           </div>
         </div>
 
         <div className="space-y-2">
-          <Label className="text-gray-700">Supplier</Label>
+          <Label htmlFor={disabled ? undefined : `${id}-supplier`} className="text-gray-700">Supplier</Label>
           {disabled ? (
             <p className="h-10 flex items-center rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700">{form.supplier || '—'}</p>
           ) : (
-            <Input value={form.supplier} onChange={(e) => update('supplier', e.target.value)} className={fieldClass('supplier')} />
+            <Input id={`${id}-supplier`} value={form.supplier} onChange={(e) => update('supplier', e.target.value)} className={fieldClass('supplier')} />
           )}
         </div>
 
@@ -136,8 +143,16 @@ export default function DocumentReviewForm({ document }: { document: Document })
           <Button
             className="w-full bg-[#FFC30D] text-black hover:bg-[#E6B00C] font-medium rounded-full h-11"
             onClick={onApprove}
+            disabled={isSubmitting}
           >
-            Approve & Save
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              'Approve & Save'
+            )}
           </Button>
         </div>
       )}
