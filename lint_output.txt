@@ -1,0 +1,383 @@
+
+> interface@0.1.0 lint /app
+> eslint
+
+
+/app/src/app/api/admin/create-schema/route.ts
+   20:23  error    Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+   26:11  warning  'cookieStore' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   75:49  error    Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+   75:61  error    Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+   79:45  error    Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+   79:73  error    Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  112:88  error    Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  119:45  error    Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  158:17  error    Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  169:19  error    Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+
+/app/src/app/api/auth/admin-signup/route.ts
+  63:56  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/app/src/app/document-types/page.tsx
+  12:93  warning  'DialogTrigger' is defined but never used                                                                     @typescript-eslint/no-unused-vars
+  13:10  warning  'Table' is defined but never used                                                                             @typescript-eslint/no-unused-vars
+  13:17  warning  'TableBody' is defined but never used                                                                         @typescript-eslint/no-unused-vars
+  13:28  warning  'TableCell' is defined but never used                                                                         @typescript-eslint/no-unused-vars
+  13:39  warning  'TableHead' is defined but never used                                                                         @typescript-eslint/no-unused-vars
+  13:50  warning  'TableHeader' is defined but never used                                                                       @typescript-eslint/no-unused-vars
+  13:63  warning  'TableRow' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  14:22  warning  'Trash2' is defined but never used                                                                            @typescript-eslint/no-unused-vars
+  14:40  warning  'Code' is defined but never used                                                                              @typescript-eslint/no-unused-vars
+  25:25  error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  34:25  error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  41:11  warning  'profile' is assigned a value but never used                                                                  @typescript-eslint/no-unused-vars
+  47:10  warning  'selectedCategory' is assigned a value but never used                                                         @typescript-eslint/no-unused-vars
+  47:28  warning  'setSelectedCategory' is assigned a value but never used                                                      @typescript-eslint/no-unused-vars
+  66:6   warning  React Hook useEffect has a missing dependency: 'fetchData'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/app/src/app/documents/[id]/page.tsx
+  10:10  warning  'Card' is defined but never used          @typescript-eslint/no-unused-vars
+  40:53  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/app/src/app/login/page.tsx
+    6:10  warning  'Card' is defined but never used                   @typescript-eslint/no-unused-vars
+   11:10  warning  'Label' is defined but never used                  @typescript-eslint/no-unused-vars
+   55:9   warning  'handleSignUp' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  105:17  error    Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+
+/app/src/app/logs/page.tsx
+    6:29  warning  'CardDescription' is defined but never used                                                                   @typescript-eslint/no-unused-vars
+   13:23  warning  'CheckCircle' is defined but never used                                                                       @typescript-eslint/no-unused-vars
+   20:12  error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+   34:11  warning  'profile' is assigned a value but never used                                                                  @typescript-eslint/no-unused-vars
+   44:6   warning  React Hook useEffect has a missing dependency: 'fetchLogs'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  131:35  error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+
+/app/src/app/page.tsx
+  3:10  warning  'supabase' is defined but never used             @typescript-eslint/no-unused-vars
+  3:20  warning  'isSupabaseAvailable' is defined but never used  @typescript-eslint/no-unused-vars
+  4:10  warning  'mapRowToDocument' is defined but never used     @typescript-eslint/no-unused-vars
+
+/app/src/app/signup/page.tsx
+  82:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/app/src/components/add-document-type-modal.tsx
+   71:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  208:65  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/app/src/components/admin/admin-dashboard.tsx
+   3:49  warning  'CheckCircle2' is defined but never used  @typescript-eslint/no-unused-vars
+   3:63  warning  'XCircle' is defined but never used       @typescript-eslint/no-unused-vars
+   3:72  warning  'FileText' is defined but never used      @typescript-eslint/no-unused-vars
+  66:40  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/app/src/components/admin/client-detail-view.tsx
+    7:21  warning  'Users' is defined but never used                                                                                                                      @typescript-eslint/no-unused-vars
+    7:38  warning  'FileText' is defined but never used                                                                                                                   @typescript-eslint/no-unused-vars
+    7:48  warning  'Activity' is defined but never used                                                                                                                   @typescript-eslint/no-unused-vars
+    7:64  warning  'Trash2' is defined but never used                                                                                                                     @typescript-eslint/no-unused-vars
+   10:10  warning  'useAuthStore' is defined but never used                                                                                                               @typescript-eslint/no-unused-vars
+   16:10  warning  'ScrollArea' is defined but never used                                                                                                                 @typescript-eslint/no-unused-vars
+   18:10  warning  'Select' is defined but never used                                                                                                                     @typescript-eslint/no-unused-vars
+   18:18  warning  'SelectContent' is defined but never used                                                                                                              @typescript-eslint/no-unused-vars
+   18:33  warning  'SelectItem' is defined but never used                                                                                                                 @typescript-eslint/no-unused-vars
+   18:45  warning  'SelectTrigger' is defined but never used                                                                                                              @typescript-eslint/no-unused-vars
+   18:60  warning  'SelectValue' is defined but never used                                                                                                                @typescript-eslint/no-unused-vars
+   42:11  warning  'SchemaField' is defined but never used                                                                                                                @typescript-eslint/no-unused-vars
+   49:52  error    Unexpected any. Specify a different type                                                                                                               @typescript-eslint/no-explicit-any
+   90:16  warning  'e' is defined but never used                                                                                                                          @typescript-eslint/no-unused-vars
+  125:21  error    Unexpected any. Specify a different type                                                                                                               @typescript-eslint/no-explicit-any
+  160:6   warning  React Hook useEffect has missing dependencies: 'fetchDocuments', 'fetchSchemas', and 'fetchUsers'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  197:43  error    Unexpected any. Specify a different type                                                                                                               @typescript-eslint/no-explicit-any
+  248:40  error    Unexpected any. Specify a different type                                                                                                               @typescript-eslint/no-explicit-any
+  305:21  error    Unexpected any. Specify a different type                                                                                                               @typescript-eslint/no-explicit-any
+
+/app/src/components/app-sidebar.tsx
+  15:26  warning  'UploadCloud' is defined but never used      @typescript-eslint/no-unused-vars
+  15:39  warning  'LayoutDashboard' is defined but never used  @typescript-eslint/no-unused-vars
+
+/app/src/components/command-bar.tsx
+   30:7   warning  'isCommandResult' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              @typescript-eslint/no-unused-vars
+   70:9   warning  The 'allResults' array makes the dependencies of useEffect Hook (at line 127) change on every render. To fix this, wrap the initialization of 'allResults' in its own useMemo() Hook                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              react-hooks/exhaustive-deps
+   78:7   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/app/src/components/command-bar.tsx:78:7
+  76 |   useEffect(() => {
+  77 |     if (query !== '') {
+> 78 |       setSelectedIndex(0)
+     |       ^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  79 |     }
+  80 |   }, [query])
+  81 |  react-hooks/set-state-in-effect
+  184:35  warning  'index' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 @typescript-eslint/no-unused-vars
+  221:35  warning  'index' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 @typescript-eslint/no-unused-vars
+
+/app/src/components/confidence-review.tsx
+   16:10  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     @typescript-eslint/no-explicit-any
+   19:21  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     @typescript-eslint/no-explicit-any
+   23:46  warning  'fieldName' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+   25:27  error    Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+/app/src/components/confidence-review.tsx:25:27
+  23 | function FieldWithConfidence({ label, value, fieldName, type = "text", onChange, isEditing = false }: FieldWithConfidenceProps) {
+  24 |   // Mock confidence for individual fields (in real app, this would come from the API)
+> 25 |   const fieldConfidence = Math.random() * 0.4 + 0.6 // Random between 0.6-1.0
+     |                           ^^^^^^^^^^^^^ Cannot call impure function
+  26 |   const confidenceColor = fieldConfidence >= 0.85 ? 'text-green-600' : fieldConfidence >= 0.7 ? 'text-yellow-600' : 'text-red-600'
+  27 |
+  28 |   return (  react-hooks/purity
+   79:52  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     @typescript-eslint/no-explicit-any
+   86:52  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     @typescript-eslint/no-explicit-any
+  191:55  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     @typescript-eslint/no-explicit-any
+
+/app/src/components/document-details.tsx
+   8:10  warning  'Card' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+   8:16  warning  'CardContent' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 @typescript-eslint/no-unused-vars
+  10:10  warning  'cn' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          @typescript-eslint/no-unused-vars
+  11:37  warning  'Clock' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       @typescript-eslint/no-unused-vars
+  11:53  warning  'ImageIcon' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   @typescript-eslint/no-unused-vars
+  15:10  warning  'activeTab' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          @typescript-eslint/no-unused-vars
+  15:21  warning  'setActiveTab' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       @typescript-eslint/no-unused-vars
+  43:55  error    Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+/app/src/components/document-details.tsx:43:55
+  41 |     const expiry = doc?.downloadExpiry
+  42 |     if (!expiry || !(expiry instanceof Date) || isNaN(expiry.getTime())) return 0
+> 43 |     return Math.max(0, Math.floor((expiry.getTime() - Date.now()) / (1000 * 60 * 60)))
+     |                                                       ^^^^^^^^^^ Cannot call impure function
+  44 |   }, [doc?.downloadExpiry])
+  45 |
+  46 |   const startEditing = () => {  react-hooks/purity
+
+/app/src/components/document-review-form.tsx
+  28:60  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  42:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/app/src/components/document-type-badge.tsx
+   39:6  warning  React Hook useMemo has a missing dependency: 'document'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+   56:6  warning  React Hook useMemo has a missing dependency: 'document'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+   91:9  warning  'getValidationIcon' is assigned a value but never used                                                     @typescript-eslint/no-unused-vars
+  144:9  warning  'totalErrors' is assigned a value but never used                                                           @typescript-eslint/no-unused-vars
+
+/app/src/components/document-viewer.tsx
+  34:9  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+/app/src/components/documents-interface.tsx
+   19:70   warning  'DatabaseRow' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+   30:3    warning  'SidebarGroupLabel' is defined but never used                                                                     @typescript-eslint/no-unused-vars
+   36:3    warning  'SidebarMenuSub' is defined but never used                                                                        @typescript-eslint/no-unused-vars
+   37:3    warning  'SidebarMenuSubItem' is defined but never used                                                                    @typescript-eslint/no-unused-vars
+   38:3    warning  'SidebarMenuSubButton' is defined but never used                                                                  @typescript-eslint/no-unused-vars
+   43:10   warning  'FileText' is defined but never used                                                                              @typescript-eslint/no-unused-vars
+   43:20   warning  'Clock' is defined but never used                                                                                 @typescript-eslint/no-unused-vars
+   43:27   warning  'AlertTriangle' is defined but never used                                                                         @typescript-eslint/no-unused-vars
+   43:42   warning  'CheckCircle' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+   43:55   warning  'BarChart3' is defined but never used                                                                             @typescript-eslint/no-unused-vars
+   43:76   warning  'Plus' is defined but never used                                                                                  @typescript-eslint/no-unused-vars
+   43:82   warning  'AtSign' is defined but never used                                                                                @typescript-eslint/no-unused-vars
+   43:90   warning  'ChevronRight' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+   43:104  warning  'ChevronDown' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+   43:117  warning  'LayoutDashboard' is defined but never used                                                                       @typescript-eslint/no-unused-vars
+   43:153  warning  'LogOut' is defined but never used                                                                                @typescript-eslint/no-unused-vars
+  148:10   warning  'documentTypes' is assigned a value but never used                                                                @typescript-eslint/no-unused-vars
+  157:6    warning  React Hook useEffect has a missing dependency: 'fetchProfile'. Either include it or remove the dependency array   react-hooks/exhaustive-deps
+  250:48   error    Unexpected any. Specify a different type                                                                          @typescript-eslint/no-explicit-any
+  285:9    warning  'handleSignOut' is assigned a value but never used                                                                @typescript-eslint/no-unused-vars
+  430:6    warning  React Hook useEffect has a missing dependency: 'loadDocuments'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  965:41   warning  'groupId' is defined but never used                                                                               @typescript-eslint/no-unused-vars
+
+/app/src/components/documents-table.tsx
+   15:3   warning  'Download' is defined but never used            @typescript-eslint/no-unused-vars
+   85:7   warning  'typeIcons' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  110:3   warning  'onConfidenceReview' is defined but never used  @typescript-eslint/no-unused-vars
+  258:11  warning  'FileIcon' is assigned a value but never used   @typescript-eslint/no-unused-vars
+
+/app/src/components/empty-state.tsx
+  29:70  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+/app/src/components/faro-init.tsx
+  4:26  warning  'faro' is defined but never used  @typescript-eslint/no-unused-vars
+
+/app/src/components/json-viewer.tsx
+   12:24  error    Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+   23:27  error    Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+   36:40  error    Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+   39:37  error    Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+   42:40  error    Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+   50:46  error    Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+   56:28  error    Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+   58:9   warning  'toggle' is assigned a value but never used        @typescript-eslint/no-unused-vars
+   69:9   warning  'resetVisible' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   73:9   warning  'matches' is assigned a value but never used       @typescript-eslint/no-unused-vars
+   93:61  error    Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  109:76  error    Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  133:66  error    Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+
+/app/src/components/organization-schemas-sheet.tsx
+    8:16  warning  'CardContent' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+   11:16  warning  'Trash2' is defined but never used                                                                               @typescript-eslint/no-unused-vars
+   14:10  warning  'Select' is defined but never used                                                                               @typescript-eslint/no-unused-vars
+   14:18  warning  'SelectContent' is defined but never used                                                                        @typescript-eslint/no-unused-vars
+   14:33  warning  'SelectItem' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+   14:45  warning  'SelectTrigger' is defined but never used                                                                        @typescript-eslint/no-unused-vars
+   14:60  warning  'SelectValue' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+   31:11  warning  'SchemaField' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+   60:6   warning  React Hook useEffect has a missing dependency: 'fetchSchemas'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  104:14  warning  'e' is defined but never used                                                                                    @typescript-eslint/no-unused-vars
+  152:21  error    Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+
+/app/src/components/organizations-view.tsx
+    6:69  warning  'CardFooter' is defined but never used                           @typescript-eslint/no-unused-vars
+   13:39  warning  'Globe' is defined but never used                                @typescript-eslint/no-unused-vars
+   99:65  error    Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+  192:22  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+/app/src/components/profile-modal.tsx
+   9:18  warning  'User' is defined but never used      @typescript-eslint/no-unused-vars
+   9:24  warning  'Mail' is defined but never used      @typescript-eslint/no-unused-vars
+  11:10  warning  'supabase' is defined but never used  @typescript-eslint/no-unused-vars
+
+/app/src/components/side-sheet.tsx
+    4:10  warning  'X' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-unused-vars
+    4:43  warning  'FileText' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               @typescript-eslint/no-unused-vars
+    6:10  warning  'cn' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+   12:10  warning  'Separator' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              @typescript-eslint/no-unused-vars
+   32:14  warning  'error' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-unused-vars
+   37:28  error    React Hook "useMemo" is called conditionally. React Hooks must be called in the exact same order in every component render                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         react-hooks/rules-of-hooks
+   42:63  error    Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+/app/src/components/side-sheet.tsx:42:63
+  40 |       return 0
+  41 |     }
+> 42 |     return Math.max(0, Math.floor((downloadExpiry.getTime() - Date.now()) / (1000 * 60 * 60)))
+     |                                                               ^^^^^^^^^^ Cannot call impure function
+  43 |   }, [document?.downloadExpiry])
+  44 |
+  45 |   const startEditing = () => {  react-hooks/purity
+  126:83  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-explicit-any
+  217:29  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element                                                                                                                                                                                                                                                                                                                                                                                                                            @next/next/no-img-element
+
+/app/src/components/ui/collapsible.tsx
+  3:13  warning  'React' is defined but never used  @typescript-eslint/no-unused-vars
+
+/app/src/components/ui/sidebar.tsx
+  617:26  error  Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+/app/src/components/ui/sidebar.tsx:617:26
+  615 |   // Random width between 50 to 90%.
+  616 |   const width = React.useMemo(() => {
+> 617 |     return `${Math.floor(Math.random() * 40) + 50}%`
+      |                          ^^^^^^^^^^^^^ Cannot call impure function
+  618 |   }, [])
+  619 |
+  620 |   return (  react-hooks/purity
+
+/app/src/components/ui/textarea.tsx
+  5:18  error  An interface declaring no members is equivalent to its supertype  @typescript-eslint/no-empty-object-type
+
+/app/src/contexts/language-context.tsx
+  25:7   error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/app/src/contexts/language-context.tsx:25:7
+  23 |     const savedLang = localStorage.getItem('app-language') as Language
+  24 |     if (savedLang && (savedLang === 'EN' || savedLang === 'FR')) {
+> 25 |       setLanguageState(savedLang)
+     |       ^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  26 |       setDictionary(savedLang === 'FR' ? fr : en)
+  27 |     }
+  28 |   }, [])  react-hooks/set-state-in-effect
+  39:18  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                @typescript-eslint/no-explicit-any
+
+/app/src/hooks/use-real-time.ts
+    1:38  warning  'useCallback' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          @typescript-eslint/no-unused-vars
+   14:42  warning  'kpiData' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              @typescript-eslint/no-unused-vars
+   14:70  warning  'onKPIUpdate' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          @typescript-eslint/no-unused-vars
+   34:18  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         @typescript-eslint/no-explicit-any
+  129:7   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/app/src/hooks/use-real-time.ts:129:7
+  127 |         return current.receivedAt > latest.receivedAt ? current : latest
+  128 |       })
+> 129 |       setLastUpdate(mostRecentDoc.receivedAt)
+      |       ^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  130 |     }
+  131 |   }, [documents])
+  132 |  react-hooks/set-state-in-effect
+
+/app/src/instrumentation.ts
+  5:25  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  6:35  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  7:45  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  8:39  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+/app/src/lib/document-schema.ts
+  100:24  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  147:40  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  156:34  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  204:46  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  223:44  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  316:49  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  341:36  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  341:51  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  452:37  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  452:52  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  581:85  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  677:21  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  702:15  warning  'data' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  733:43  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  744:38  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  747:73  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  769:54  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  769:60  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  770:21  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  808:86  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  843:87  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  915:49  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+
+/app/src/lib/supabase.ts
+  8:3  warning  Unused eslint-disable directive (no problems were reported from 'no-console')
+
+/app/src/lib/utils.ts
+   20:12  warning  'error' is defined but never used        @typescript-eslint/no-unused-vars
+  112:39  error    A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+/app/src/stores/auth-store.ts
+  107:15  warning  'data' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  153:14  warning  'error' is defined but never used          @typescript-eslint/no-unused-vars
+
+/app/src/types/document-schema.ts
+  7:41  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/app/src/types/document.ts
+  44:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+✖ 207 problems (87 errors, 120 warnings)
+  0 errors and 1 warning potentially fixable with the `--fix` option.
+
+ ELIFECYCLE  Command failed with exit code 1.
