@@ -179,7 +179,7 @@ export function DocumentsInterface({ initialDocuments }: { initialDocuments: Doc
         setTotalCount(count)
       }
 
-      const documents = (data || []).map((row: any) => ({
+      const documents = (data || []).map((row: DatabaseRow & { organization?: { id: string, company_name: string } }) => ({
         id: String(row.id ?? crypto.randomUUID()),
         status: (row.status ?? 'extracted') as Document['status'],
         type: (row.type ?? 'OTHER') as Document['type'],
@@ -891,8 +891,9 @@ export function DocumentsInterface({ initialDocuments }: { initialDocuments: Doc
           </SidebarContent>
 
           <SidebarFooter className="bg-[#161616] text-white border-t border-[#161616] p-[28px_24px_31px_25px]">
-            <div
-              className="w-[236px] h-[82px] rounded-[10px] bg-[#222222] px-[14px] pr-[60px] py-[12px] flex items-center gap-3 group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:w-auto cursor-pointer hover:bg-[#2A2A2A] transition-colors"
+            <button
+              type="button"
+              className="w-[236px] h-[82px] rounded-[10px] bg-[#222222] px-[14px] pr-[60px] py-[12px] flex items-center gap-3 group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:w-auto cursor-pointer hover:bg-[#2A2A2A] transition-colors text-left"
               onClick={() => setIsProfileModalOpen(true)}
             >
               <div className="flex h-[60px] w-[60px] items-center justify-center rounded-[8px] bg-yellow-400 text-black font-semibold shrink-0">
@@ -902,7 +903,7 @@ export function DocumentsInterface({ initialDocuments }: { initialDocuments: Doc
                 <span className="text-[20px] leading-[24px] truncate">{profile?.email?.split('@')[0] || 'Mehdi K.'}</span>
                 <span className="text-xs text-zinc-400 mt-2">{t('profile.title')}</span>
               </div>
-            </div>
+            </button>
           </SidebarFooter>
           {/* Rail provides a thin interactive area at the seam to toggle the sidebar */}
           <SidebarRail />
