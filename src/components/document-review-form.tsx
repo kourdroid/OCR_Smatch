@@ -6,10 +6,12 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
+import { Loader2 } from 'lucide-react'
 import { Document } from '@/types/document'
 import { documentSchemaService } from '@/lib/document-schema'
 
 export default function DocumentReviewForm({ document }: { document: Document }) {
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [form, setForm] = useState({
     documentNumber: document.documentNumber || '',
     amount: document.amount || 0,
@@ -44,9 +46,11 @@ export default function DocumentReviewForm({ document }: { document: Document })
   }
 
   const onApprove = async () => {
+    setIsSubmitting(true)
     const url = process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL
     if (!url) {
       toast.error('Webhook not configured')
+      setIsSubmitting(false)
       return
     }
     try {
@@ -63,6 +67,8 @@ export default function DocumentReviewForm({ document }: { document: Document })
       toast.success('Document updated')
     } catch {
       toast.error('Update failed')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -136,7 +142,9 @@ export default function DocumentReviewForm({ document }: { document: Document })
           <Button
             className="w-full bg-[#FFC30D] text-black hover:bg-[#E6B00C] font-medium rounded-full h-11"
             onClick={onApprove}
+            disabled={isSubmitting}
           >
+            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Approve & Save
           </Button>
         </div>
