@@ -48,23 +48,30 @@ const SortButton = ({
   sortField: keyof Document | null
   sortDirection: 'asc' | 'desc'
   onSort: (field: keyof Document) => void
-}) => (
-  <Button
-    variant="ghost"
-    size="sm"
-    className="h-auto p-0 font-medium text-muted-foreground hover:text-foreground"
-    onClick={() => onSort(field)}
-  >
-    <span className="flex items-center gap-1">
-      {children}
-      {sortField === field && (
-        sortDirection === 'asc' ?
-          <ChevronUp className="h-3 w-3" /> :
-          <ChevronDown className="h-3 w-3" />
-      )}
-    </span>
-  </Button>
-)
+}) => {
+  const isSorted = sortField === field
+  const nextDirection = isSorted && sortDirection === 'desc' ? 'ascending' : 'descending'
+  const label = typeof children === 'string' ? children : String(field)
+
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      className="h-auto p-0 font-medium text-muted-foreground hover:text-foreground"
+      onClick={() => onSort(field)}
+      aria-label={`Sort by ${label} ${nextDirection}`}
+    >
+      <span className="flex items-center gap-1">
+        {children}
+        {isSorted && (
+          sortDirection === 'asc' ?
+            <ChevronUp className="h-3 w-3" aria-hidden="true" /> :
+            <ChevronDown className="h-3 w-3" aria-hidden="true" />
+        )}
+      </span>
+    </Button>
+  )
+}
 
 interface DocumentsTableProps {
   documentRows: DocumentRow[]
@@ -139,6 +146,10 @@ export function DocumentsTable({
     }
     setExpandedGroups(newExpanded)
     onGroupToggle?.(groupId)
+  }
+
+  const getSortState = (field: keyof Document) => {
+    return sortField === field ? (sortDirection === 'asc' ? 'ascending' : 'descending') : undefined
   }
 
   // Sort document rows (groups by their aggregate data, singles by their document data)
@@ -370,22 +381,22 @@ export function DocumentsTable({
             <Table>
               <TableHeader className="bg-[#FAFAFA] rounded-t-xl">
                 <TableRow className="hover:bg-transparent">
-                  <TableHead className="text-[#7D7D7D] font-semibold pl-[26px]">
+                  <TableHead className="text-[#7D7D7D] font-semibold pl-[26px]" aria-sort={getSortState('documentNumber')}>
                     <SortButton field="documentNumber" sortField={sortField} sortDirection={sortDirection} onSort={handleSort}>
                       ID
                     </SortButton>
                   </TableHead>
-                  <TableHead className="text-[#7D7D7D] font-semibold">
+                  <TableHead className="text-[#7D7D7D] font-semibold" aria-sort={getSortState('type')}>
                     <SortButton field="type" sortField={sortField} sortDirection={sortDirection} onSort={handleSort}>
                       Document Type
                     </SortButton>
                   </TableHead>
-                  <TableHead className="w-[140px] text-[#7D7D7D] font-semibold">
+                  <TableHead className="w-[140px] text-[#7D7D7D] font-semibold" aria-sort={getSortState('amount')}>
                     <SortButton field="amount" sortField={sortField} sortDirection={sortDirection} onSort={handleSort}>
                       Amount
                     </SortButton>
                   </TableHead>
-                  <TableHead className="text-[#7D7D7D] font-semibold">
+                  <TableHead className="text-[#7D7D7D] font-semibold" aria-sort={getSortState('supplier')}>
                     <SortButton field="supplier" sortField={sortField} sortDirection={sortDirection} onSort={handleSort}>
                       Supplier
                     </SortButton>
@@ -393,12 +404,12 @@ export function DocumentsTable({
                   <TableHead className="w-[160px] text-[#7D7D7D] font-semibold">Shipper</TableHead>
                   <TableHead className="w-[100px] text-[#7D7D7D] font-semibold">File</TableHead>
                   <TableHead className="w-[140px] text-[#7D7D7D] font-semibold">Action</TableHead>
-                  <TableHead className="w-[140px] text-[#7D7D7D] font-semibold">
+                  <TableHead className="w-[140px] text-[#7D7D7D] font-semibold" aria-sort={getSortState('channel')}>
                     <SortButton field="channel" sortField={sortField} sortDirection={sortDirection} onSort={handleSort}>
                       Channel
                     </SortButton>
                   </TableHead>
-                  <TableHead className="w-[120px] text-[#7D7D7D] font-semibold pr-[78px]">
+                  <TableHead className="w-[120px] text-[#7D7D7D] font-semibold pr-[78px]" aria-sort={getSortState('receivedAt')}>
                     <SortButton field="receivedAt" sortField={sortField} sortDirection={sortDirection} onSort={handleSort}>
                       Time
                     </SortButton>
