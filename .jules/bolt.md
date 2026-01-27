@@ -1,0 +1,3 @@
+## 2024-05-23 - Optimization of Document Rendering Flow
+**Learning:** `DocumentsInterface` re-renders frequently due to `useRealTime` updates. Expensive calculations like grouping documents (`groupDocuments`) were being executed on every render, even when inputs didn't change. Also, `groupDocuments` was defined inside the component, creating a new function reference every time.
+**Action:** Always move pure helper functions outside the component scope. Use `useMemo` for derived data like grouped/sorted arrays, especially when the component has frequent re-renders due to real-time data subscriptions.
