@@ -1,0 +1,3 @@
+## 2026-01-30 - Optimize Expensive Render Logic
+**Learning:** React components (like `DocumentsInterface`) with real-time subscriptions (`useRealTime`) can trigger frequent re-renders. Expensive derived state calculations (e.g., grouping and filtering thousands of documents) inside the render body block the main thread and degrade UI responsiveness.
+**Action:** Always extract expensive data transformation logic (like `groupDocuments`) into pure functions outside the component or wrap them in `useMemo` with correct dependencies. Also, ensure child components (like `DocumentsTable`) memoize their own derived state (like sorting) to prevent cascading re-calculations.
