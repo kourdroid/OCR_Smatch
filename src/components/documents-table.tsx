@@ -25,6 +25,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { EmptyState } from '@/components/empty-state'
 import {
   Pagination,
   PaginationContent,
@@ -192,6 +193,8 @@ export function DocumentsTable({
               variant="ghost"
               size="sm"
               className="h-4 w-4 p-0"
+              aria-label={isExpanded ? "Collapse group" : "Expand group"}
+              aria-expanded={isExpanded}
               onClick={(e) => {
                 e.stopPropagation()
                 toggleGroupExpansion(group.id)
@@ -420,6 +423,13 @@ export function DocumentsTable({
                       <TableCell><div className="bg-muted h-4 w-16 rounded" /></TableCell>
                     </TableRow>
                   ))
+                )}
+                {!isLoading && paginatedRows.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={9} className="h-96">
+                      <EmptyState hasFilters={true} />
+                    </TableCell>
+                  </TableRow>
                 )}
                 {paginatedRows.map((row) => {
                   if (row.type === 'group' && row.group) {
