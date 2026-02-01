@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Activity, AlertTriangle, Clock, Users, CheckCircle2, XCircle, FileText } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { DocumentsTable } from '../documents-table'
-import { Document, DocumentRow, DocumentGroup } from '@/types/document'
+import { groupDocuments } from '@/lib/document-utils'
+import { Document } from '@/types/document'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { formatCompactNumber } from '@/lib/utils'
 
@@ -40,58 +41,7 @@ export function AdminDashboard({
   const [isLoading, setIsLoading] = useState(true)
   const formatter = new Intl.NumberFormat('en-US')
 
-  // Helper to group documents for the table
-  const groupDocuments = (docs: Document[]): DocumentRow[] => {
-    const groups: { [key: string]: Document[] } = {}
-    const singles: Document[] = []
-
-    docs.forEach(doc => {
-      const groupKey = `${doc.supplier}-${doc.type}`
-      if (!groups[groupKey]) {
-        groups[groupKey] = []
-      }
-      groups[groupKey].push(doc)
-    })
-
-    const documentRows: DocumentRow[] = []
-
-    Object.entries(groups).forEach(([groupKey, groupDocs]) => {
-      if (groupDocs.length > 1) {
-        const totalAmount = groupDocs.reduce((sum, doc) => sum + doc.amount, 0)
-        const avgConfidence = groupDocs.reduce((sum, doc) => sum + doc.confidence, 0) / groupDocs.length
-        const latestReceivedAt = Math.max(...groupDocs.map(doc => new Date(doc.receivedAt).getTime()))
-        const statuses = [...new Set(groupDocs.map(doc => doc.status))]
-        let groupStatus: 'extracted' | 'needs review' | 'failed' | 'mixed' = 'mixed'
-        if (statuses.length === 1) {
-          groupStatus = statuses[0] as any
-        }
-
-        const group: DocumentGroup = {
-          id: `group-${groupKey}`,
-          groupKey: groupDocs[0].supplier,
-          documents: groupDocs,
-          aggregateData: {
-            count: groupDocs.length,
-            totalAmount,
-            currency: groupDocs[0].currency,
-            avgConfidence,
-            status: groupStatus,
-            latestReceivedAt: new Date(latestReceivedAt)
-          }
-        }
-
-        documentRows.push({ type: 'group', group })
-      } else {
-        singles.push(...groupDocs)
-      }
-    })
-
-    singles.forEach(doc => {
-      documentRows.push({ type: 'single', document: doc })
-    })
-
-    return documentRows
-  }
+  const documentRows = useMemo(() => groupDocuments(documents), [documents])
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -242,7 +192,7 @@ export function AdminDashboard({
         </CardHeader>
         <CardContent className="p-0">
           <DocumentsTable
-            documentRows={groupDocuments(documents)}
+            documentRows={documentRows}
             isLoading={isLoadingDocuments}
             selectedDocument={selectedDocument}
             onDocumentSelect={onDocumentSelect}

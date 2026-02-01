@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { ArrowLeft, Users, FileJson, FileText, Activity, Plus, Trash2, Database, Save, Loader2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { DocumentsTable } from '@/components/documents-table'
+import { groupDocuments } from '@/lib/document-utils'
 import { useAuthStore } from '@/stores/auth-store'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -16,7 +17,7 @@ import { toast } from 'sonner'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Document, DocumentRow, DocumentGroup } from '@/types/document'
+import { Document } from '@/types/document'
 
 interface ClientDetailViewProps {
   organizationId: string
@@ -223,57 +224,7 @@ export function ClientDetailView({ organizationId, onBack }: ClientDetailViewPro
     }
   }
 
-  const groupDocuments = (docs: Document[]): DocumentRow[] => {
-    const groups: { [key: string]: Document[] } = {}
-    const singles: Document[] = []
-
-    docs.forEach(doc => {
-      const groupKey = `${doc.supplier}-${doc.type}`
-      if (!groups[groupKey]) {
-        groups[groupKey] = []
-      }
-      groups[groupKey].push(doc)
-    })
-
-    const documentRows: DocumentRow[] = []
-
-    Object.entries(groups).forEach(([groupKey, groupDocs]) => {
-      if (groupDocs.length > 1) {
-        const totalAmount = groupDocs.reduce((sum, doc) => sum + doc.amount, 0)
-        const avgConfidence = groupDocs.reduce((sum, doc) => sum + doc.confidence, 0) / groupDocs.length
-        const latestReceivedAt = Math.max(...groupDocs.map(doc => new Date(doc.receivedAt).getTime()))
-        const statuses = [...new Set(groupDocs.map(doc => doc.status))]
-        let groupStatus: 'extracted' | 'needs review' | 'failed' | 'mixed' = 'mixed'
-        if (statuses.length === 1) {
-          groupStatus = statuses[0] as any
-        }
-
-        const group: DocumentGroup = {
-          id: `group-${groupKey}`,
-          groupKey: groupDocs[0].supplier,
-          documents: groupDocs,
-          aggregateData: {
-            count: groupDocs.length,
-            totalAmount,
-            currency: groupDocs[0].currency,
-            avgConfidence,
-            status: groupStatus,
-            latestReceivedAt: new Date(latestReceivedAt)
-          }
-        }
-
-        documentRows.push({ type: 'group', group })
-      } else {
-        singles.push(...groupDocs)
-      }
-    })
-
-    singles.forEach(doc => {
-      documentRows.push({ type: 'single', document: doc })
-    })
-
-    return documentRows
-  }
+  const documentRows = useMemo(() => groupDocuments(documents), [documents])
 
   const handleCreateUser = async () => {
     if (!newUser.email || !newUser.password) {
@@ -576,7 +527,7 @@ export function ClientDetailView({ organizationId, onBack }: ClientDetailViewPro
             </CardHeader>
             <CardContent>
               <DocumentsTable
-                documentRows={groupDocuments(documents)}
+                documentRows={documentRows}
                 isLoading={isLoadingDocuments}
                 onDocumentSelect={() => { }}
                 selectedDocument={null}
