@@ -1,0 +1,26 @@
+
+> interface@0.1.0 dev /app
+> next dev --turbopack
+
+▲ Next.js 16.1.6 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.0.2:3000
+
+✓ Starting...
+Attention: Next.js now collects completely anonymous telemetry regarding usage.
+This information is used to shape Next.js' roadmap and prioritize features.
+You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+https://nextjs.org/telemetry
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+[OpenTelemetry] Initializing server-side instrumentation...
+[OpenTelemetry] OTLP Traces Endpoint: http://localhost:4318/v1/traces
+[OpenTelemetry] Headers configured: false
+[OpenTelemetry] ✅ SDK started successfully
+[OpenTelemetry] Service: smatch-ocr-dashboard
+[OpenTelemetry] Auto-instrumentations enabled
+[OpenTelemetry] 📤 Test span created and ended: otel_init_test
+✓ Ready in 4.7s
+○ Compiling /test-perf ...
+ GET /test-perf 200 in 7.9s (compile: 7.0s, proxy.ts: 200ms, render: 732ms)
+ ELIFECYCLE  Command failed.
