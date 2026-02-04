@@ -1058,7 +1058,7 @@ export function DocumentsInterface({ initialDocuments }: { initialDocuments: Doc
                   )}
 
                   {(activeNav === 'dashboard' || activeNav === 'all_documents') && (!isAdmin || activeNav === 'all_documents') && (
-                    (activeNav === 'dashboard' ? documentRowsDashboard.length === 0 : documentRowsAll.length === 0) ? (
+                    (!isLoadingDocuments && (activeNav === 'dashboard' ? documentRowsDashboard.length === 0 : documentRowsAll.length === 0)) ? (
                       <EmptyState hasFilters={Object.values(filters).some(v =>
                         Array.isArray(v) ? v.length > 0 : v && typeof v === 'object' ? Object.keys(v).length > 0 : !!v
                       )} onClearFilters={handleClearFilters} />

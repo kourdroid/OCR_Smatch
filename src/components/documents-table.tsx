@@ -192,6 +192,8 @@ export function DocumentsTable({
               variant="ghost"
               size="sm"
               className="h-4 w-4 p-0"
+              aria-label={isExpanded ? `Collapse group ${group.groupKey}` : `Expand group ${group.groupKey}`}
+              aria-expanded={isExpanded}
               onClick={(e) => {
                 e.stopPropagation()
                 toggleGroupExpansion(group.id)
