@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useId } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -8,8 +8,12 @@ import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import { Document } from '@/types/document'
 import { documentSchemaService } from '@/lib/document-schema'
+import { Loader2 } from 'lucide-react'
+import { SchemaValidationResult } from '@/types/document-schema'
 
 export default function DocumentReviewForm({ document }: { document: Document }) {
+  const formId = useId()
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [form, setForm] = useState({
     documentNumber: document.documentNumber || '',
     amount: document.amount || 0,
@@ -21,25 +25,25 @@ export default function DocumentReviewForm({ document }: { document: Document })
 
   const status = document.status
 
-  const validation = useMemo(() => {
+  const validation: SchemaValidationResult = useMemo(() => {
     try {
       return documentSchemaService.validateDocument(document.payload || {}, document.type)
     } catch {
-      return { missingRequired: [], invalidFields: [] } as any
+      return { isValid: false, missingRequired: [], invalidFields: [], score: 0 }
     }
   }, [document.payload, document.type])
 
   const flagged = useMemo(() => {
     const set = new Set<string>([
-      ...((validation?.missingRequired as string[]) || []),
-      ...((validation?.invalidFields as string[]) || []),
+      ...(validation.missingRequired || []),
+      ...(validation.invalidFields || []),
     ])
     return set
   }, [validation])
 
   const disabled = status === 'extracted'
 
-  const update = (key: keyof typeof form, value: any) => {
+  const update = (key: keyof typeof form, value: string | number) => {
     setForm(prev => ({ ...prev, [key]: value }))
   }
 
@@ -49,6 +53,8 @@ export default function DocumentReviewForm({ document }: { document: Document })
       toast.error('Webhook not configured')
       return
     }
+
+    setIsSubmitting(true)
     try {
       const res = await fetch(url, {
         method: 'POST',
@@ -63,6 +69,8 @@ export default function DocumentReviewForm({ document }: { document: Document })
       toast.success('Document updated')
     } catch {
       toast.error('Update failed')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -83,50 +91,130 @@ export default function DocumentReviewForm({ document }: { document: Document })
 
       <div className="space-y-5">
         <div className="space-y-2">
-          <Label className="text-gray-700">Document Number</Label>
+          <Label
+            htmlFor={disabled ? undefined : `${formId}-documentNumber`}
+            id={`${formId}-documentNumber-label`}
+            className="text-gray-700"
+          >
+            Document Number
+          </Label>
           {disabled ? (
-            <p className="h-10 flex items-center rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700">{form.documentNumber || '—'}</p>
+            <p
+              aria-labelledby={`${formId}-documentNumber-label`}
+              className="h-10 flex items-center rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700"
+            >
+              {form.documentNumber || '—'}
+            </p>
           ) : (
-            <Input value={form.documentNumber} onChange={(e) => update('documentNumber', e.target.value)} className={fieldClass('document_number')} />
+            <Input
+              id={`${formId}-documentNumber`}
+              value={form.documentNumber}
+              onChange={(e) => update('documentNumber', e.target.value)}
+              className={fieldClass('document_number')}
+            />
           )}
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label className="text-gray-700">Amount</Label>
+            <Label
+              htmlFor={disabled ? undefined : `${formId}-amount`}
+              id={`${formId}-amount-label`}
+              className="text-gray-700"
+            >
+              Amount
+            </Label>
             {disabled ? (
-              <p className="h-10 flex items-center rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700">{form.amount || 0}</p>
+              <p
+                aria-labelledby={`${formId}-amount-label`}
+                className="h-10 flex items-center rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700"
+              >
+                {form.amount || 0}
+              </p>
             ) : (
-              <Input type="number" step="0.01" value={form.amount} onChange={(e) => update('amount', Number(e.target.value))} className={fieldClass('amount')} />
+              <Input
+                id={`${formId}-amount`}
+                type="number"
+                step="0.01"
+                value={form.amount}
+                onChange={(e) => update('amount', Number(e.target.value))}
+                className={fieldClass('amount')}
+              />
             )}
           </div>
           <div className="space-y-2">
-            <Label className="text-gray-700">Currency</Label>
+            <Label
+              htmlFor={disabled ? undefined : `${formId}-currency`}
+              id={`${formId}-currency-label`}
+              className="text-gray-700"
+            >
+              Currency
+            </Label>
             {disabled ? (
-              <p className="h-10 flex items-center rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700 uppercase">{form.currency || '—'}</p>
+              <p
+                aria-labelledby={`${formId}-currency-label`}
+                className="h-10 flex items-center rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700 uppercase"
+              >
+                {form.currency || '—'}
+              </p>
             ) : (
-              <Input value={form.currency} onChange={(e) => update('currency', e.target.value)} className={fieldClass('currency')} />
+              <Input
+                id={`${formId}-currency`}
+                value={form.currency}
+                onChange={(e) => update('currency', e.target.value)}
+                className={fieldClass('currency')}
+              />
             )}
           </div>
         </div>
 
         <div className="space-y-2">
-          <Label className="text-gray-700">Supplier</Label>
+          <Label
+            htmlFor={disabled ? undefined : `${formId}-supplier`}
+            id={`${formId}-supplier-label`}
+            className="text-gray-700"
+          >
+            Supplier
+          </Label>
           {disabled ? (
-            <p className="h-10 flex items-center rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700">{form.supplier || '—'}</p>
+            <p
+              aria-labelledby={`${formId}-supplier-label`}
+              className="h-10 flex items-center rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700"
+            >
+              {form.supplier || '—'}
+            </p>
           ) : (
-            <Input value={form.supplier} onChange={(e) => update('supplier', e.target.value)} className={fieldClass('supplier')} />
+            <Input
+              id={`${formId}-supplier`}
+              value={form.supplier}
+              onChange={(e) => update('supplier', e.target.value)}
+              className={fieldClass('supplier')}
+            />
           )}
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label className="text-gray-700">Channel</Label>
-            <p className="h-10 flex items-center rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700 capitalize">{form.channel || '—'}</p>
+            <Label id={`${formId}-channel-label`} className="text-gray-700">
+              Channel
+            </Label>
+            <p
+              aria-labelledby={`${formId}-channel-label`}
+              className="h-10 flex items-center rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700 capitalize"
+            >
+              {form.channel || '—'}
+            </p>
           </div>
           <div className="space-y-2">
-            <Label className="text-gray-700">File Type</Label>
-            <p className="h-10 flex items-center rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700 uppercase">{form.fileType || '—'}</p>
+            <Label id={`${formId}-fileType-label`} className="text-gray-700">
+              File Type
+            </Label>
+            <p
+              aria-labelledby={`${formId}-fileType-label`}
+              className="h-10 flex items-center rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700 uppercase"
+            >
+              {form.fileType || '—'}
+            </p>
           </div>
         </div>
       </div>
@@ -136,8 +224,9 @@ export default function DocumentReviewForm({ document }: { document: Document })
           <Button
             className="w-full bg-[#FFC30D] text-black hover:bg-[#E6B00C] font-medium rounded-full h-11"
             onClick={onApprove}
+            disabled={isSubmitting}
           >
-            Approve & Save
+            {isSubmitting ? <Loader2 className="animate-spin" /> : 'Approve & Save'}
           </Button>
         </div>
       )}
