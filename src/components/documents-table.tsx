@@ -196,6 +196,7 @@ export function DocumentsTable({
                 e.stopPropagation()
                 toggleGroupExpansion(group.id)
               }}
+              aria-label={isExpanded ? 'Collapse group' : 'Expand group'}
             >
               {isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
             </Button>
