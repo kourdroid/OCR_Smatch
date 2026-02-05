@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useMemo, useCallback } from 'react'
 import {
   FileText,
   Receipt,
@@ -121,49 +121,53 @@ export function DocumentsTable({
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
   const itemsPerPage = itemsPerPageProp ?? 10
 
-  const handleSort = (field: keyof Document) => {
+  const handleSort = useCallback((field: keyof Document) => {
     if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')
     } else {
       setSortField(field)
       setSortDirection('desc')
     }
-  }
+  }, [sortField])
 
-  const toggleGroupExpansion = (groupId: string) => {
-    const newExpanded = new Set(expandedGroups)
-    if (newExpanded.has(groupId)) {
-      newExpanded.delete(groupId)
-    } else {
-      newExpanded.add(groupId)
-    }
-    setExpandedGroups(newExpanded)
+  const toggleGroupExpansion = useCallback((groupId: string) => {
+    setExpandedGroups(prev => {
+      const newExpanded = new Set(prev)
+      if (newExpanded.has(groupId)) {
+        newExpanded.delete(groupId)
+      } else {
+        newExpanded.add(groupId)
+      }
+      return newExpanded
+    })
     onGroupToggle?.(groupId)
-  }
+  }, [onGroupToggle])
 
   // Sort document rows (groups by their aggregate data, singles by their document data)
-  const sortedRows = [...documentRows].sort((a, b) => {
-    let aValue, bValue
+  const sortedRows = useMemo(() => {
+    return [...documentRows].sort((a, b) => {
+      let aValue, bValue
 
-    if (a.type === 'group' && a.group) {
-      aValue = a.group.aggregateData.latestReceivedAt
-    } else if (a.document) {
-      aValue = a.document[sortField]
-    }
+      if (a.type === 'group' && a.group) {
+        aValue = a.group.aggregateData.latestReceivedAt
+      } else if (a.document) {
+        aValue = a.document[sortField]
+      }
 
-    if (b.type === 'group' && b.group) {
-      bValue = b.group.aggregateData.latestReceivedAt
-    } else if (b.document) {
-      bValue = b.document[sortField]
-    }
+      if (b.type === 'group' && b.group) {
+        bValue = b.group.aggregateData.latestReceivedAt
+      } else if (b.document) {
+        bValue = b.document[sortField]
+      }
 
-    if (aValue == null && bValue == null) return 0
-    if (aValue == null) return sortDirection === 'asc' ? 1 : -1
-    if (bValue == null) return sortDirection === 'asc' ? -1 : 1
-    if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1
-    if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1
-    return 0
-  })
+      if (aValue == null && bValue == null) return 0
+      if (aValue == null) return sortDirection === 'asc' ? 1 : -1
+      if (bValue == null) return sortDirection === 'asc' ? -1 : 1
+      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1
+      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1
+      return 0
+    })
+  }, [documentRows, sortField, sortDirection])
 
   // Use props for pagination if available, otherwise fallback (though we expect server-side mostly now)
   // If server-side, documentRows is already the current page.
