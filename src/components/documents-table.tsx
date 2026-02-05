@@ -48,23 +48,31 @@ const SortButton = ({
   sortField: keyof Document | null
   sortDirection: 'asc' | 'desc'
   onSort: (field: keyof Document) => void
-}) => (
-  <Button
-    variant="ghost"
-    size="sm"
-    className="h-auto p-0 font-medium text-muted-foreground hover:text-foreground"
-    onClick={() => onSort(field)}
-  >
-    <span className="flex items-center gap-1">
-      {children}
-      {sortField === field && (
-        sortDirection === 'asc' ?
-          <ChevronUp className="h-3 w-3" /> :
-          <ChevronDown className="h-3 w-3" />
-      )}
-    </span>
-  </Button>
-)
+}) => {
+  const isSorted = sortField === field
+  // aria-sort should be on the th, but since we can't easily access the parent th here,
+  // we rely on the descriptive aria-label on the button which is the interactive element.
+  const ariaLabel = `Sort by ${typeof children === 'string' ? children : String(field)}${isSorted ? ` ${sortDirection === 'asc' ? 'ascending' : 'descending'}` : ''}`
+
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      className="h-auto p-0 font-medium text-muted-foreground hover:text-foreground"
+      onClick={() => onSort(field)}
+      aria-label={ariaLabel}
+    >
+      <span className="flex items-center gap-1">
+        {children}
+        {isSorted && (
+          sortDirection === 'asc' ?
+            <ChevronUp className="h-3 w-3" /> :
+            <ChevronDown className="h-3 w-3" />
+        )}
+      </span>
+    </Button>
+  )
+}
 
 interface DocumentsTableProps {
   documentRows: DocumentRow[]
@@ -196,6 +204,8 @@ export function DocumentsTable({
                 e.stopPropagation()
                 toggleGroupExpansion(group.id)
               }}
+              aria-label={isExpanded ? "Collapse group" : "Expand group"}
+              aria-expanded={isExpanded}
             >
               {isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
             </Button>
